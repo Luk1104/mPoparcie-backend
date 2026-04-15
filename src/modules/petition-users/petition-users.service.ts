@@ -1,0 +1,61 @@
+import bcrypt from 'bcrypt';
+import { PetitionUserModel } from './petition-users.model.js';
+import { registerSchema, loginSchema } from './petition-users.validation.js';
+import type { RegisterDTO, LoginDTO } from './petition-users.validation.js';
+
+import { generateToken } from '../../shared/utils/jwt.util.js';
+
+export const loginUser = async (data: LoginDTO) => {
+
+  const parsed = loginSchema.safeParse(data);
+  if (!parsed.success) {
+    throw new Error(`Validation failed: ${parsed.error.message}`);
+  }
+
+  const { username, password } = parsed.data;
+
+  const user = await PetitionUserModel.findOne({ username });
+  if (!user) throw new Error('Nieprawidłowe dane logowania');
+
+  const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+  if (!isPasswordValid) throw new Error('Nieprawidłowe dane logowania');
+
+  const token = generateToken({
+    userId: user._id.toString(),
+    role: 'petition_user'
+  });
+
+  return {
+    token,
+  };
+};
+
+export const registerUser = async (data: RegisterDTO) => {
+
+  const parsed = registerSchema.safeParse(data);
+  if (!parsed.success) {
+    throw new Error(`Validation failed: ${parsed.error.message}`);
+  }
+
+  const { username, password, name, surname } = parsed.data;
+
+  const existing = await PetitionUserModel.findOne({ username });
+  if (existing) throw new Error('Użytkownik o takiej nazwie już istnieje');
+
+  const SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS) || 10;
+  const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+
+  const created = await PetitionUserModel.create({
+    username,
+    passwordHash,
+    name,
+    surname,
+  });
+
+  //Tutaj jest generowane po .__id ale mozna tez po username
+  const token = generateToken({ userId: created._id.toString(), role: 'petition_user' });
+
+  return {
+    token,
+  };
+};

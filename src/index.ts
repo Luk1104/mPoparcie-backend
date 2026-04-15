@@ -1,4 +1,5 @@
 import express, { type Request, type Response } from 'express';
+import routes from './routes';
 
 const app = express();
 // Używamy portu z pliku .env, a jeśli go nie ma, domyślnie 3000
@@ -6,6 +7,8 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware pozwalający na czytanie body z zapytań w formacie JSON (przyda Ci się później)
 app.use(express.json());
+// Podłączamy API routes (login/register)
+app.use('/api', routes);
 
 // Główny endpoint testowy
 app.get('/', (req: Request, res: Response) => {
