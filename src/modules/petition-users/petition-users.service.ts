@@ -7,12 +7,7 @@ import { generateToken } from '../../shared/utils/jwt.util.js';
 
 export const loginUser = async (data: LoginDTO) => {
 
-  const parsed = loginSchema.safeParse(data);
-  if (!parsed.success) {
-    throw new Error(`Validation failed: ${parsed.error.message}`);
-  }
-
-  const { username, password } = parsed.data;
+  const { username, password } = data;
 
   const user = await PetitionUserModel.findOne({ username });
   if (!user) throw new Error('Nieprawidłowe dane logowania');
@@ -32,12 +27,7 @@ export const loginUser = async (data: LoginDTO) => {
 
 export const registerUser = async (data: RegisterDTO) => {
 
-  const parsed = registerSchema.safeParse(data);
-  if (!parsed.success) {
-    throw new Error(`Validation failed: ${parsed.error.message}`);
-  }
-
-  const { username, password, name, surname } = parsed.data;
+  const { username, password, name, surname } = data;
 
   const existing = await PetitionUserModel.findOne({ username });
   if (existing) throw new Error('Użytkownik o takiej nazwie już istnieje');

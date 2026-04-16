@@ -11,7 +11,7 @@ export function validateData(schema: z.ZodType) {
 
       return res
         .status(400)
-        .json({ error: "Invalid data", details: errorMessages });
+        .json({ error: "Invalid data", message: errorMessages });
     }
 
     req.body = result.data;
