@@ -1,19 +1,26 @@
-import { z } from "zod";
-import { CreatePetitionSchema } from "./petition-crud.zod.js";
-import { PetitionModel } from "./petition-crud.mongo.js";
+import { PetitionModel } from "./petition-crud.model.js";
+import { type CreatePetitionDTO } from "./petition-crud.schema.js";
+import { PetitionUserModel } from "../petition-users/petition-users.model.js";
 
 export const insertPetitionService = async (
-  petitionData: z.infer<typeof CreatePetitionSchema>,
+  petitionData: CreatePetitionDTO,
+  userId: string,
 ) => {
-  const { token, deadline, ...restData } = petitionData;
+  const { deadline, ...restData } = petitionData;
 
-  //todo: check name in the token, check if exists in database, if not return error, if yes, add to petition data
-  // for now author is going to be "test"
+  try {
+    const userExists = await PetitionUserModel.findById(userId);
+    if (!userExists) {
+      throw new Error("User not found");
+    }
+  } catch (error) {
+    throw new Error("User from token not found in database: " + String(error));
+  }
 
   const petition = new PetitionModel({
     ...restData,
     deadline: new Date(deadline),
-    author: "test",
+    author: userId,
   });
 
   try {
@@ -31,9 +38,24 @@ export const getPetitionsService = async () => {
 
     const petitions = await PetitionModel.find()
       .sort({ createdAt: -1 })
-      .select("-_id -__v");
+      .select("-__v")
+      .lean();
 
-    return petitions;
+    const petitionsWithDisplayName = await Promise.all(
+      petitions.map(async (petition) => {
+        const user = await PetitionUserModel.findById(petition.author);
+        const displayName = user
+          ? `${user.name} ${user.surname}`
+          : "Nieznany Autor";
+
+        return {
+          ...petition,
+          authorDisplayName: displayName,
+        };
+      }),
+    );
+
+    return petitionsWithDisplayName;
   } catch (error) {
     throw new Error("Failed to fetch petitions: " + String(error));
   }
