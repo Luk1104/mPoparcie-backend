@@ -1,15 +1,15 @@
 import { type Request, type Response } from "express";
-import { CreatePetitionSchema } from "./petition-crud.zod.js";
 import { insertPetitionService } from "./petition-crud.service.js";
 import { getPetitionsService } from "./petition-crud.service.js";
-import { z } from "zod";
+import type { CreatePetitionDTO } from "./petition-crud.schema.js";
 
 export const createPetition = async (
-  req: Request<{}, any, z.infer<typeof CreatePetitionSchema>>,
+  req: Request<any, any, CreatePetitionDTO>,
   res: Response,
 ) => {
   try {
-    await insertPetitionService(req.body);
+    const user = (req as any).user;
+    await insertPetitionService(req.body, user.userId);
     return res.status(201).json("OK");
   } catch (error) {
     return res.status(400).json("Wystapil blad");
