@@ -10,6 +10,7 @@ export const CreatePetitionSchema = z
     deadline: z.string().refine((date) => !isNaN(Date.parse(date)), {
       message: "Nieprawidlowy format daty",
     }),
-    token: z.string().min(1, "Token jest wymagany"),
   })
   .strict();
+
+export type CreatePetitionDTO = z.infer<typeof CreatePetitionSchema>;
