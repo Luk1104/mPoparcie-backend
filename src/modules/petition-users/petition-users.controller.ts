@@ -1,5 +1,5 @@
 import { type Request, type Response } from "express";
-import { registerUser, loginUser } from "./petition-users.service.js";
+import { registerUser, loginUser, deleteUserService } from "./petition-users.service.js";
 import type { RegisterDTO, LoginDTO } from "./petition-users.schema.js";
 
 export const login = async (
@@ -13,6 +13,7 @@ export const login = async (
       .status(200)
       .json({ status: "success", message: "Login successful" });
   } catch (error) {
+    console.log("Error in delete user controller:", error);
     return res
       .status(500)
       .json({ status: "error", message: "Wystąpił błąd podczas logowania" });
@@ -34,5 +35,21 @@ export const register = async (
     return res
       .status(500)
       .json({ status: "error", message: "Wystąpił błąd podczas rejestracji" });
+  }
+};
+
+export const deleteUser = async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    const userId = user.userId;
+    await deleteUserService(userId);
+    return res
+      .status(200)
+      .json({ status: "success", message: "Użytkownik usunięty" });
+  } catch (error) {
+    console.log("Error in delete user controller:", error);
+    return res
+      .status(500)
+      .json({ status: "error", message: "Wystąpił błąd podczas usuwania użytkownika" });
   }
 };
