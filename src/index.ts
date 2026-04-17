@@ -13,7 +13,7 @@ app.use("/api/petition/user", petitionUsersRoute);
 app.use("/api/petition", petitionCrudRoute);
 
 mongoose
-  .connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/mpoparcie")
+  .connect(process.env.MONGO_URI as string)
   .then(() => console.log("Connected to MongoDB!"))
   .catch((err) => {
     console.error("Error while connecting to MongoDB:", err);
