@@ -1,7 +1,7 @@
 import express, { type Router } from "express";
 import { login, register } from "./petition-users.controller.js";
 import { validateData } from "../../shared/middleware/validation.middleware.js";
-import { loginSchema, registerSchema } from "./petition-users.validation.js";
+import { loginSchema, registerSchema } from "./petition-users.schema.js";
 
 const router: Router = express.Router();
 
