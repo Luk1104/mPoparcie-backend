@@ -40,6 +40,7 @@ export const registerUser = async (data: RegisterDTO) => {
 
   //Tutaj jest generowane po ._id ale mozna tez po username
   const token = generateToken({
+    username: created.username,
     userId: created._id.toString(),
     role: "petition_user",
   });
