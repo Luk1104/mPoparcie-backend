@@ -1,5 +1,6 @@
 import express from "express";
 import mongoose from "mongoose";
+import cors from "cors";
 
 import petitionUsersRoute from "./modules/petition-users/petition-users.route.js";
 import petitionCrudRoute from "./modules/petition-crud/petition-crud.route.js";
@@ -7,6 +8,7 @@ import petitionCrudRoute from "./modules/petition-crud/petition-crud.route.js";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(cors());
 app.use(express.json());
 
 app.use("/api/petition/user", petitionUsersRoute);
