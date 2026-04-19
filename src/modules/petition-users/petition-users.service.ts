@@ -14,6 +14,7 @@ export const loginUser = async (data: LoginDTO) => {
   if (!isPasswordValid) throw new Error("Nieprawidłowe dane logowania");
 
   const token = generateToken({
+    username: user.username,
     userId: user._id.toString(),
     role: "petition_user",
   });
@@ -47,7 +48,6 @@ export const registerUser = async (data: RegisterDTO) => {
 };
 
 export const deleteUserService = async (userId: string) => {
-
   const deleted = await PetitionUserModel.findByIdAndDelete(userId);
   if (!deleted) throw new Error("Użytkownik nie istnieje");
 

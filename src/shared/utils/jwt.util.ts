@@ -1,18 +1,18 @@
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
 
 export interface TokenPayload {
+  username: string;
   userId: string;
   role: string;
 }
 
 export const generateToken = (payload: TokenPayload): string => {
-
   const secret = process.env.JWT_SECRET || "secretkey";
-  
+
   if (!secret) {
-    throw new Error('Brak JWT_SECRET w zmiennych środowiskowych!');
+    throw new Error("Brak JWT_SECRET w zmiennych środowiskowych!");
   }
 
   //generowanie tokenu
-  return jwt.sign(payload, secret, { expiresIn: '1h' });
+  return jwt.sign(payload, secret, { expiresIn: "1h" });
 };
