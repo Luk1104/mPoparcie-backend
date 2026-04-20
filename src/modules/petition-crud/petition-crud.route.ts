@@ -13,6 +13,9 @@ router.post(
   validateData(CreatePetitionSchema),
   createPetition,
 );
-router.get("/get", getPetition);
+
+router.get("/", getPetition);
+router.get("/:id", getPetition);
+// router.get("/me", getPetition);
 
 export default router;
