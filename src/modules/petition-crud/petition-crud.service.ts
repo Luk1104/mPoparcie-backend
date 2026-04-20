@@ -1,6 +1,7 @@
 import { PetitionModel } from "./petition-crud.model.js";
 import { type CreatePetitionDTO } from "./petition-crud.schema.js";
 import { PetitionUserModel } from "../petition-users/petition-users.model.js";
+import { VotingModel } from "../voting/voting.model.js";
 
 export const insertPetitionService = async (
   petitionData: CreatePetitionDTO,
@@ -32,11 +33,17 @@ export const insertPetitionService = async (
   }
 };
 
-export const getPetitionsService = async () => {
+export const getPetitionsService = async (
+  id?: string,
+  name?: string,
+  category?: string,
+) => {
   try {
     //todo: frontend should send what petitions it wants. Now return all petition sorted by date
 
-    const petitions = await PetitionModel.find()
+    const query = id ? { _id: id } : {};
+
+    const petitions = await PetitionModel.find(query)
       .sort({ createdAt: -1 })
       .select("-__v")
       .lean();
@@ -48,9 +55,14 @@ export const getPetitionsService = async () => {
           ? `${user.name} ${user.surname}`
           : "Nieznany Autor";
 
+        const votesCount = await VotingModel.countDocuments({
+          petitionId: petition._id,
+        });
+
         return {
           ...petition,
           authorDisplayName: displayName,
+          votes: votesCount,
         };
       }),
     );
