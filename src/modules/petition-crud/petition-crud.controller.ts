@@ -18,7 +18,9 @@ export const createPetition = async (
 
 export const getPetition = async (req: Request, res: Response) => {
   try {
-    const petitions = await getPetitionsService();
+    const id = req.params.id;
+
+    const petitions = await getPetitionsService(id as string | undefined);
     return res.status(200).json(petitions);
   } catch (error) {
     return res.status(500).json("Wystapil blad");
