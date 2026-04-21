@@ -39,8 +39,9 @@ jobs:
     steps:
       - name: Deploy new image
         run: |
-          docker compose down
-          docker compose up --build -d
+          docker stop mpoparcie-backend || true
+          docker rm mpoparcie-backend || true
+          docker run -d -p 3000:3000 --name mpoparcie-backend localhost:32000/mpoparcie-backend:latest
     #      docker exec registry /bin/registry garbage-collect /etc/docker/registry/config.yml
 
     
