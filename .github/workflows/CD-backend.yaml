@@ -1,0 +1,46 @@
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+
+jobs:
+  build-and-push:
+    if: github.event.pull_request.merged == true
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code (Download)
+        uses: actions/checkout@v4
+
+      - name: Save Artifact
+        run: |
+          docker save -o images.tar \
+            mpoparcie-backend:latest
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-images-multi
+          path: images.tar
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: localhost:32000/mpoparcie-backend:latest
+
+  deploy:
+    needs: build-and-push
+    runs-on: self-hosted
+
+    steps:
+      - name: Deploy new image
+        run: |
+          docker compose down
+          docker compose up --build -d
+    #      docker exec registry /bin/registry garbage-collect /etc/docker/registry/config.yml
+
+    

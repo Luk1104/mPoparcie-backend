@@ -1,6 +1,6 @@
 services:
   backend:
-    build: .
+    image: localhost:32000/mpoparcie-backend:latest
     ports:
       - "3000:3000"
     environment:
