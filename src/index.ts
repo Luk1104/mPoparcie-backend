@@ -1,31 +1,29 @@
-import express, { type Request, type Response } from 'express';
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+
+import petitionUsersRoute from "./modules/petition-users/petition-users.route.js";
+import petitionCrudRoute from "./modules/petition-crud/petition-crud.route.js";
 
 const app = express();
-// Używamy portu z pliku .env, a jeśli go nie ma, domyślnie 3000
 const PORT = process.env.PORT || 3000;
 
-// Middleware pozwalający na czytanie body z zapytań w formacie JSON (przyda Ci się później)
+app.use(cors());
 app.use(express.json());
 
-// Główny endpoint testowy
-app.get('/', (req: Request, res: Response) => {
-  res.json({
-    status: 'success',
-    message: 'Serwer deweloperski działa jak marzenie! 🚀',
-    time: new Date().toLocaleTimeString()
+app.use("/api/petition/user", petitionUsersRoute);
+app.use("/api/petition", petitionCrudRoute);
+
+mongoose
+  .connect(process.env.MONGO_URI as string)
+  .then(() => console.log("Connected to MongoDB!"))
+  .catch((err) => {
+    console.error("Error while connecting to MongoDB:", err);
+    process.exit(1);
   });
-});
 
-// Prosty endpoint typu health-check
-app.get('/ping', (req: Request, res: Response) => {
-  res.send('pong 🏓');
-});
-
-// Uruchomienie nasłuchiwania
 app.listen(PORT, () => {
-  console.log(`\n---`);
-  console.log(`[${new Date().toLocaleTimeString()}] 🟢 Serwer wystartował!`);
-  console.log(`Nasłuchuję na: http://localhost:${PORT}`);
-  console.log(`Spróbuj zmienić tekst w index.ts i zapisać plik, aby sprawdzić auto-restart.`);
-  console.log(`---\n`);
+  console.log(
+    `[${new Date().toLocaleTimeString()}] Server started on port ${PORT}`,
+  );
 });
