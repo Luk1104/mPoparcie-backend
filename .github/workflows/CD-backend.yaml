@@ -14,23 +14,24 @@ jobs:
       - name: Checkout code (Download)
         uses: actions/checkout@v4
 
-      - name: Save Artifact
-        run: |
-          docker save -o images.tar \
-            mpoparcie-backend:latest
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: docker-images-multi
-          path: images.tar
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
           context: .
           push: true
           tags: localhost:32000/mpoparcie-backend:latest
+          load: true
+
+      - name: Save Artifact
+        run: |
+          docker save -o images.tar \
+            localhost:32000/mpoparcie-backend:latest
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-images-multi
+          path: images.tar
 
   deploy:
     needs: build-and-push
@@ -43,5 +44,3 @@ jobs:
           docker rm mpoparcie-backend || true
           docker run -d -p 3000:3000 --name mpoparcie-backend localhost:32000/mpoparcie-backend:latest
     #      docker exec registry /bin/registry garbage-collect /etc/docker/registry/config.yml
-
-    
