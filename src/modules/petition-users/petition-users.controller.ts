@@ -26,10 +26,11 @@ export const login = async (
       .status(200)
       .json({ status: "success", message: "Login successful" });
   } catch (error) {
-    console.log("Error in login controller:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    console.log("Error in login controller:", message);
     return res
       .status(500)
-      .json({ status: "error", message: "Wystąpił błąd podczas logowania" });
+      .json({ status: "error", message: message || "Wystąpił błąd podczas logowania" });
   }
 };
 
@@ -53,10 +54,11 @@ export const register = async (
       .status(201)
       .json({ status: "success", message: "Rejestracja udana"});
   } catch (error) {
-    console.log("Error in register controller:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    console.log("Error in register controller:", message);
     return res
       .status(500)
-      .json({ status: "error", message: "Wystąpił błąd podczas rejestracji" });
+      .json({ status: "error", message: message || "Wystąpił błąd podczas rejestracji" });
   }
 };
 
@@ -69,12 +71,13 @@ export const deleteUser = async (req: Request, res: Response) => {
       .status(200)
       .json({ status: "success", message: "Użytkownik usunięty" });
   } catch (error) {
-    console.log("Error in delete user controller:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    console.log("Error in delete user controller:", message);
     return res
       .status(500)
       .json({
         status: "error",
-        message: "Wystąpił błąd podczas usuwania użytkownika",
+        message: message || "Wystąpił błąd podczas usuwania użytkownika",
       });
   }
 };

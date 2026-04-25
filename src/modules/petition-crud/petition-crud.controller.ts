@@ -1,6 +1,7 @@
 import { type Request, type Response } from "express";
 import { insertPetitionService } from "./petition-crud.service.js";
-import { getPetitionsService } from "./petition-crud.service.js";
+import { getSinglePetitionService } from "./petition-crud.service.js";
+import { getPetitionsFilteredService } from "./petition-crud.service.js";
 import type { CreatePetitionDTO } from "./petition-crud.schema.js";
 
 export const createPetition = async (
@@ -12,17 +13,38 @@ export const createPetition = async (
     await insertPetitionService(req.body, user.userId);
     return res.status(201).json({ status: "success", message: "Petycja utworzona pomyślnie" });
   } catch (error) {
-    return res.status(400).json({ status: "error", message: "Wystąpił błąd" });
+    const message = error instanceof Error ? error.message : String(error);
+    return res.status(400).json({ status: "error", message: message || "Wystąpił błąd" });
   }
 };
 
-export const getPetition = async (req: Request, res: Response) => {
+export const getSinglePetition = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
 
-    const petitions = await getPetitionsService(id as string | undefined);
+    const petition = await getSinglePetitionService(id as string | undefined);
+    if (!petition) {
+      return res.status(404).json({ status: "error", message: "Petycja nie znaleziona" });
+    }
+
+    return res.status(200).json({ status: "success", data: petition });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return res.status(500).json({ status: "error", message: message || "Wystąpił błąd" });
+  }
+};
+
+export const getPetitionsFiltered = async (req: Request, res: Response) => {
+  try {
+    const { title, category } = req.query;
+
+    const petitions = await getPetitionsFilteredService(
+      title as string | undefined,
+      category as string | undefined,
+    );
     return res.status(200).json({ status: "success", data: petitions });
   } catch (error) {
-    return res.status(500).json({ status: "error", message: "Wystąpił błąd" });
+    const message = error instanceof Error ? error.message : String(error);
+    return res.status(500).json({ status: "error", message: message || "Wystąpił błąd" });
   }
 };

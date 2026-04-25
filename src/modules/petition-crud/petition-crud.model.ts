@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const PetitionSchema = new mongoose.Schema(
   {
-    title: { type: String, required: true, trim: true },
+    title: { type: String, required: true, trim: true, unique: true },
     shortDescription: { type: String, required: true, trim: true },
     longDescription: { type: String, required: true, trim: true },
     goal: { type: Number, required: true, min: 1 },

@@ -33,15 +33,49 @@ export const insertPetitionService = async (
   }
 };
 
-export const getPetitionsService = async (
+export const getSinglePetitionService = async (
   id?: string,
-  name?: string,
+) => {
+  try {
+    // When id is provided return a single petition; do not return all
+    if (!id) {
+      throw new Error("Brak id petycji");
+    }
+
+    const petition = await PetitionModel.findById(id)
+      .select("-__v")
+      .lean();
+
+    if (!petition) {
+      return null;
+    }
+
+    const user = await PetitionUserModel.findById(petition.author);
+    const displayName = user ? `${user.name} ${user.surname}` : "Nieznany Autor";
+
+    const votesCount = await VotingModel.countDocuments({ petitionId: petition._id });
+
+    return {
+      ...petition,
+      authorDisplayName: displayName,
+      votes: votesCount,
+    };
+  } catch (error) {
+    throw new Error("Failed to fetch petition: " + String(error));
+  }
+};
+
+//const query = id ? { _id: id , _name: name , _category: category} : {};
+
+export const getPetitionsFilteredService = async (
+  title?: string,
   category?: string,
 ) => {
   try {
-    //todo: frontend should send what petitions it wants. Now return all petition sorted by date
-
-    const query = id ? { _id: id } : {};
+    const query: any = {};
+    //if (title) query.title = { $regex: title, $options: "i" };
+    if (title) query.title = title;
+    if (category) query.category = category;
 
     const petitions = await PetitionModel.find(query)
       .sort({ createdAt: -1 })
@@ -50,18 +84,18 @@ export const getPetitionsService = async (
 
     const petitionsWithDisplayName = await Promise.all(
       petitions.map(async (petition) => {
-        const user = await PetitionUserModel.findById(petition.author);
-        const displayName = user
-          ? `${user.name} ${user.surname}`
+        const petition_author = await PetitionUserModel.findById(petition.author);
+        const displayAuthor = petition_author
+          ? `${petition_author.name} ${petition_author.surname}`
           : "Nieznany Autor";
 
         const votesCount = await VotingModel.countDocuments({
           petitionId: petition._id,
-        });
+        }); 
 
         return {
           ...petition,
-          authorDisplayName: displayName,
+          authorDisplayName: displayAuthor,
           votes: votesCount,
         };
       }),
