@@ -14,5 +14,5 @@ export const generateToken = (payload: TokenPayload): string => {
   }
 
   //generowanie tokenu
-  return jwt.sign(payload, secret, { expiresIn: "1h" });
+  return jwt.sign(payload, secret, { expiresIn: "24h" });
 };

@@ -3,12 +3,17 @@ import jwt from 'jsonwebtoken';
 import { type TokenPayload } from '../utils/jwt.util.js';
 
 export const verifyToken = (req: Request, res: Response, next: NextFunction) => {
-  // Token jest wysyłany w nagłówku jako "Bearer <token>"
-  const authHeader = req.headers.authorization;
-  const token = authHeader && authHeader.split(' ')[1];
+  // Token is expected in the Cookie header as 'token=<value>'
+  const cookieHeader = req.headers.cookie as string | undefined;
+  let token: string | undefined;
+  if (cookieHeader) {
+    const cookies = cookieHeader.split(';').map(c => c.trim());
+    const tokenCookie = cookies.find(c => c.startsWith('token='));
+    if (tokenCookie) token = decodeURIComponent(tokenCookie.split('=')[1] || '');
+  }
 
   if (!token) {
-    return res.status(401).json({ error: 'Brak tokenu w nagłówku' });
+    return res.status(401).json({ error: 'Brak tokenu w ciasteczkach' });
   }
 
   try {

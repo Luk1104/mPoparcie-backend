@@ -10,9 +10,9 @@ export const createPetition = async (
   try {
     const user = (req as any).user;
     await insertPetitionService(req.body, user.userId);
-    return res.status(201).json("OK");
+    return res.status(201).json({ status: "success", message: "Petycja utworzona pomyślnie" });
   } catch (error) {
-    return res.status(400).json("Wystapil blad");
+    return res.status(400).json({ status: "error", message: "Wystąpił błąd" });
   }
 };
 
@@ -21,8 +21,8 @@ export const getPetition = async (req: Request, res: Response) => {
     const id = req.params.id;
 
     const petitions = await getPetitionsService(id as string | undefined);
-    return res.status(200).json(petitions);
+    return res.status(200).json({ status: "success", data: petitions });
   } catch (error) {
-    return res.status(500).json("Wystapil blad");
+    return res.status(500).json({ status: "error", message: "Wystąpił błąd" });
   }
 };
