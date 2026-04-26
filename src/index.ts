@@ -10,8 +10,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(
   cors({
-    origin: "http://localhost:5173", // ZMIEŃ NA PORT SWOJEGO FRONTENDU (bez ukośnika na końcu!)
-    credentials: true, // Pozwala na przesyłanie ciasteczek
+    credentials: true,
   }),
 );
 
