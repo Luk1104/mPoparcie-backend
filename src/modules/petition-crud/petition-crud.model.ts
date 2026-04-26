@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { PETITION_CATEGORIES } from "./petition-crud.schema.js";
 
 const PetitionSchema = new mongoose.Schema(
   {
@@ -6,7 +7,7 @@ const PetitionSchema = new mongoose.Schema(
     shortDescription: { type: String, required: true, trim: true },
     longDescription: { type: String, required: true, trim: true },
     goal: { type: Number, required: true, min: 1 },
-    category: { type: String, required: true, trim: true },
+    category: { type: String, required: true, enum: PETITION_CATEGORIES, trim: true },
     deadline: { type: Date, required: true },
     author: { type: String, required: true, trim: true },
   },

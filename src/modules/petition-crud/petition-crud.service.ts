@@ -73,8 +73,8 @@ export const getPetitionsFilteredService = async (
 ) => {
   try {
     const query: any = {};
-    //if (title) query.title = { $regex: title, $options: "i" };
-    if (title) query.title = title;
+    if (title) query.title = { $regex: title, $options: "i" };
+    //if (title) query.title = title;
     if (category) query.category = category;
 
     const petitions = await PetitionModel.find(query)
