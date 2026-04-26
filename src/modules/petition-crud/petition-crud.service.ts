@@ -70,15 +70,24 @@ export const getSinglePetitionService = async (
 export const getPetitionsFilteredService = async (
   title?: string,
   category?: string,
+  page = 1 ,
+  perPage = 20,
 ) => {
   try {
     const query: any = {};
     if (title) query.title = { $regex: title, $options: "i" };
-    //if (title) query.title = title;
     if (category) query.category = category;
+
+    const pageNum = Math.max(1, Math.floor(Number(page) || 1));
+    const perPageNum = Math.max(1, Math.floor(Number(perPage) || 20));
+
+    const totalItems = await PetitionModel.countDocuments(query);
+    const totalPages = totalItems === 0 ? 0 : Math.ceil(totalItems / perPageNum);
 
     const petitions = await PetitionModel.find(query)
       .sort({ createdAt: -1 })
+      .skip((pageNum - 1) * perPageNum)
+      .limit(perPageNum)
       .select("-__v")
       .lean();
 
@@ -89,9 +98,7 @@ export const getPetitionsFilteredService = async (
           ? `${petition_author.name} ${petition_author.surname}`
           : "Nieznany Autor";
 
-        const votesCount = await VotingModel.countDocuments({
-          petitionId: petition._id,
-        }); 
+        const votesCount = await VotingModel.countDocuments({ petitionId: petition._id });
 
         return {
           ...petition,
@@ -101,7 +108,15 @@ export const getPetitionsFilteredService = async (
       }),
     );
 
-    return petitionsWithDisplayName;
+    return {
+      petitions: petitionsWithDisplayName,
+      meta: {
+        totalItems,
+        totalPages,
+        page: pageNum,
+        perPage: perPageNum,
+      },
+    };
   } catch (error) {
     throw new Error("Failed to fetch petitions: " + String(error));
   }
