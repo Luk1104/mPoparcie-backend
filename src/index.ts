@@ -8,7 +8,12 @@ import petitionCrudRoute from "./modules/petition-crud/petition-crud.route.js";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+app.use(
+  cors({
+    credentials: true,
+  }),
+);
+
 app.use(express.json());
 
 app.use("/api/petition/user", petitionUsersRoute);
