@@ -3,11 +3,6 @@ services:
     build: .
     ports:
       - "3000:3000"
-    environment:
-      - MONGO_URI=mongodb://mongo:27017/mpoparcie
-      - PORT=3000
-      - JWT_SECRET="secret_key"
-      - BCRYPT_SALT_ROUNDS=10
     depends_on:
       - mongo
 
