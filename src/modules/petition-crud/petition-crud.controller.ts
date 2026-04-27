@@ -11,10 +11,14 @@ export const createPetition = async (
   try {
     const user = (req as any).user;
     await insertPetitionService(req.body, user.userId);
-    return res.status(201).json({ status: "success", message: "Petycja utworzona pomyślnie" });
+    return res
+      .status(201)
+      .json({ status: "success", message: "Petycja utworzona pomyślnie" });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    return res.status(400).json({ status: "error", message: message || "Wystąpił błąd" });
+    return res
+      .status(400)
+      .json({ status: "error", message: message || "Wystąpił błąd" });
   }
 };
 
@@ -24,27 +28,40 @@ export const getSinglePetition = async (req: Request, res: Response) => {
 
     const petition = await getSinglePetitionService(id as string | undefined);
     if (!petition) {
-      return res.status(404).json({ status: "error", message: "Petycja nie znaleziona" });
+      return res
+        .status(404)
+        .json({ status: "error", message: "Petycja nie znaleziona" });
     }
 
     return res.status(200).json({ status: "success", data: petition });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    return res.status(500).json({ status: "error", message: message || "Wystąpił błąd" });
+    return res
+      .status(500)
+      .json({ status: "error", message: message || "Wystąpił błąd" });
   }
 };
 
 export const getPetitionsFiltered = async (req: Request, res: Response) => {
   try {
-    const { title, category } = req.query;
+    const { title, category, page, perPage, sortBy } = req.query;
 
-    const petitions = await getPetitionsFilteredService(
+    const pageNum = parseInt(page as string) || 1;
+    const perPageNum = parseInt(perPage as string) || 20;
+
+    const result = await getPetitionsFilteredService(
       title as string | undefined,
       category as string | undefined,
+      pageNum as number | undefined,
+      perPageNum as number | undefined,
+      sortBy as string | undefined,
     );
-    return res.status(200).json({ status: "success", data: petitions });
+
+    return res.status(200).json({ status: "success", data: result });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    return res.status(500).json({ status: "error", message: message || "Wystąpił błąd" });
+    return res
+      .status(500)
+      .json({ status: "error", message: message || "Wystąpił błąd" });
   }
 };
