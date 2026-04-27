@@ -91,7 +91,9 @@ export const getPetitionsFilteredService = async (
     let sortObj: any = { createdAt: direction };
     if (sortBy === "a")
       sortObj = { title: direction }; // Sort by title
-    else if (sortBy === "d") sortObj = { deadline: direction }; // Sort by deadline
+    else if (sortBy === "d")
+      sortObj = { deadline: direction }; // Sort by deadline
+    else if (sortBy === "v") sortObj = { votes: direction }; // Sort by votes
 
     const petitions = await PetitionModel.find(query)
       .sort(sortObj)
@@ -120,13 +122,6 @@ export const getPetitionsFilteredService = async (
         };
       }),
     );
-
-    if (sortBy === "v") {
-      // Sort by votes
-      petitionsWithDisplayName.sort((a, b) => {
-        return direction === 1 ? a.votes - b.votes : b.votes - a.votes;
-      });
-    }
 
     return {
       petitions: petitionsWithDisplayName,
