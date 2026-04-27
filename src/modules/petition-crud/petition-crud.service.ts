@@ -73,6 +73,7 @@ export const getPetitionsFilteredService = async (
   page: number = 1,
   perPageNum: number = 20,
   sortBy?: string,
+  sortOrder?: string,
 ) => {
   try {
     const query: any = {};
@@ -85,12 +86,12 @@ export const getPetitionsFilteredService = async (
     const totalPages =
       totalItems === 0 ? 0 : Math.ceil(totalItems / perPageNum);
 
-    let sortObj: any = { createdAt: -1 }; // Default: Newest first
+    const direction = sortOrder === "desc" ? -1 : 1; // asc by default
+
+    let sortObj: any = { createdAt: direction };
     if (sortBy === "a")
-      sortObj = { title: 1 }; // A-Z
-    else if (sortBy === "v")
-      sortObj = { votes: -1 }; // Most votes first
-    else if (sortBy === "d") sortObj = { deadline: 1 }; // Closest deadline first
+      sortObj = { title: direction }; // Sort by title
+    else if (sortBy === "d") sortObj = { deadline: direction }; // Sort by deadline
 
     const petitions = await PetitionModel.find(query)
       .sort(sortObj)
@@ -119,6 +120,13 @@ export const getPetitionsFilteredService = async (
         };
       }),
     );
+
+    if (sortBy === "v") {
+      // Sort by votes
+      petitionsWithDisplayName.sort((a, b) => {
+        return direction === 1 ? a.votes - b.votes : b.votes - a.votes;
+      });
+    }
 
     return {
       petitions: petitionsWithDisplayName,
