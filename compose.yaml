@@ -5,6 +5,11 @@ services:
       - "3000:3000"
     depends_on:
       - mongo
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/mpoparcie
+      - PORT=3000
+      - JWT_SECRET="secret_key"
+      - BCRYPT_SALT_ROUNDS=10
 
   mongo:
     image: mongo:8.2

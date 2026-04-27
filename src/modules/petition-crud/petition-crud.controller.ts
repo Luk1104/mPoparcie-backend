@@ -44,7 +44,7 @@ export const getSinglePetition = async (req: Request, res: Response) => {
 
 export const getPetitionsFiltered = async (req: Request, res: Response) => {
   try {
-    const { title, category, page, perPage, sortBy } = req.query;
+    const { title, category, page, perPage, sortBy, sortOrder } = req.query;
 
     const pageNum = parseInt(page as string) || 1;
     const perPageNum = parseInt(perPage as string) || 20;
@@ -55,6 +55,7 @@ export const getPetitionsFiltered = async (req: Request, res: Response) => {
       pageNum as number | undefined,
       perPageNum as number | undefined,
       sortBy as string | undefined,
+      sortOrder as string | undefined,
     );
 
     return res.status(200).json({ status: "success", data: result });
