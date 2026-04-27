@@ -33,27 +33,27 @@ export const insertPetitionService = async (
   }
 };
 
-export const getSinglePetitionService = async (
-  id?: string,
-) => {
+export const getSinglePetitionService = async (id?: string) => {
   try {
     // When id is provided return a single petition; do not return all
     if (!id) {
       throw new Error("Brak id petycji");
     }
 
-    const petition = await PetitionModel.findById(id)
-      .select("-__v")
-      .lean();
+    const petition = await PetitionModel.findById(id).select("-__v").lean();
 
     if (!petition) {
       return null;
     }
 
     const user = await PetitionUserModel.findById(petition.author);
-    const displayName = user ? `${user.name} ${user.surname}` : "Nieznany Autor";
+    const displayName = user
+      ? `${user.name} ${user.surname}`
+      : "Nieznany Autor";
 
-    const votesCount = await VotingModel.countDocuments({ petitionId: petition._id });
+    const votesCount = await VotingModel.countDocuments({
+      petitionId: petition._id,
+    });
 
     return {
       ...petition,
@@ -70,8 +70,9 @@ export const getSinglePetitionService = async (
 export const getPetitionsFilteredService = async (
   title?: string,
   category?: string,
-  page = 1 ,
-  perPage = 20,
+  page: number = 1,
+  perPageNum: number = 20,
+  sortBy?: string,
 ) => {
   try {
     const query: any = {};
@@ -79,13 +80,20 @@ export const getPetitionsFilteredService = async (
     if (category) query.category = category;
 
     const pageNum = Math.max(1, Math.floor(Number(page) || 1));
-    const perPageNum = Math.max(1, Math.floor(Number(perPage) || 20));
 
     const totalItems = await PetitionModel.countDocuments(query);
-    const totalPages = totalItems === 0 ? 0 : Math.ceil(totalItems / perPageNum);
+    const totalPages =
+      totalItems === 0 ? 0 : Math.ceil(totalItems / perPageNum);
+
+    let sortObj: any = { createdAt: -1 }; // Default: Newest first
+    if (sortBy === "a")
+      sortObj = { title: 1 }; // A-Z
+    else if (sortBy === "v")
+      sortObj = { votes: -1 }; // Most votes first
+    else if (sortBy === "d") sortObj = { deadline: 1 }; // Closest deadline first
 
     const petitions = await PetitionModel.find(query)
-      .sort({ createdAt: -1 })
+      .sort(sortObj)
       .skip((pageNum - 1) * perPageNum)
       .limit(perPageNum)
       .select("-__v")
@@ -93,12 +101,16 @@ export const getPetitionsFilteredService = async (
 
     const petitionsWithDisplayName = await Promise.all(
       petitions.map(async (petition) => {
-        const petition_author = await PetitionUserModel.findById(petition.author);
+        const petition_author = await PetitionUserModel.findById(
+          petition.author,
+        );
         const displayAuthor = petition_author
           ? `${petition_author.name} ${petition_author.surname}`
           : "Nieznany Autor";
 
-        const votesCount = await VotingModel.countDocuments({ petitionId: petition._id });
+        const votesCount = await VotingModel.countDocuments({
+          petitionId: petition._id,
+        });
 
         return {
           ...petition,
