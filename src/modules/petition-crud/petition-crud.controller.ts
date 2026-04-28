@@ -2,7 +2,9 @@ import { type Request, type Response } from "express";
 import { insertPetitionService } from "./petition-crud.service.js";
 import { getSinglePetitionService } from "./petition-crud.service.js";
 import { getPetitionsFilteredService } from "./petition-crud.service.js";
-import type { CreatePetitionDTO } from "./petition-crud.schema.js";
+import { archivePetitionService } from "./petition-crud.service.js";
+import type { ArchivePetitionDTO, CreatePetitionDTO } from "./petition-crud.schema.js";
+// import { stat } from "node:fs"; <-- co to jest
 
 export const createPetition = async (
   req: Request<any, any, CreatePetitionDTO>,
@@ -44,7 +46,7 @@ export const getSinglePetition = async (req: Request, res: Response) => {
 
 export const getPetitionsFiltered = async (req: Request, res: Response) => {
   try {
-    const { title, category, page, perPage, sortBy, sortOrder } = req.query;
+    const { title, category, page, perPage, sortBy, sortOrder, status} = req.query;
 
     const pageNum = parseInt(page as string) || 1;
     const perPageNum = parseInt(perPage as string) || 20;
@@ -56,11 +58,46 @@ export const getPetitionsFiltered = async (req: Request, res: Response) => {
       perPageNum as number | undefined,
       sortBy as string | undefined,
       sortOrder as string | undefined,
+      status as string | undefined,
     );
 
     return res.status(200).json({ status: "success", data: result });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    return res
+      .status(500)
+      .json({ status: "error", message: message || "Wystąpił błąd" });
+  }
+};
+
+export const archivePetition = async (
+  req: Request<any, any, ArchivePetitionDTO>,
+  res: Response,
+) => {
+  try {
+    const user = (req as any).user;
+    const userId = user?.userId;
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ status: "error", message: "Brak tokenu lub niezalogowany użytkownik" });
+    }
+
+    const petitionId = req.body.petitionId;
+
+    await archivePetitionService(petitionId, userId);
+
+    return res
+      .status(200)
+      .json({ status: "success", message: "Petycja ukryta pomyślnie" });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (String(message).includes("Brak uprawnień")) {
+      return res
+        .status(403)
+        .json({ status: "error", message });
+    }
+
     return res
       .status(500)
       .json({ status: "error", message: message || "Wystąpił błąd" });

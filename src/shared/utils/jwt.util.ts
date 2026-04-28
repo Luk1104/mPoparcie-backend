@@ -7,12 +7,12 @@ export interface TokenPayload {
 }
 
 export const generateToken = (payload: TokenPayload): string => {
-  const secret = process.env.JWT_SECRET || "secretkey";
+  const secret = process.env.JWT_SECRET as string;
 
   if (!secret) {
     throw new Error("Brak JWT_SECRET w zmiennych środowiskowych!");
   }
 
   //generowanie tokenu
-  return jwt.sign(payload, secret, { expiresIn: "24h" });
+  return jwt.sign(payload, secret, { expiresIn: "7d" });
 };
