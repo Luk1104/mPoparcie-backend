@@ -74,11 +74,13 @@ export const getPetitionsFilteredService = async (
   perPageNum: number = 20,
   sortBy?: string,
   sortOrder?: string,
+  status: string = "active",
 ) => {
   try {
     const query: any = {};
     if (title) query.title = { $regex: title, $options: "i" };
     if (category) query.category = category;
+    if (status) query.status = status;
 
     const pageNum = Math.max(1, Math.floor(Number(page) || 1));
 
@@ -134,5 +136,26 @@ export const getPetitionsFilteredService = async (
     };
   } catch (error) {
     throw new Error("Failed to fetch petitions: " + String(error));
+  }
+};
+
+export const archivePetitionService = async (
+  petitionId: string,
+  userId: string,
+) => {
+  try {
+    const petition = await PetitionModel.findById(petitionId);
+    if (!petition) {
+      throw new Error("Petycja nie znaleziona");
+    }
+
+    if (String(petition.author) !== String(userId) && String(userId) !== process.env.ADMIN_USER_ID) {
+      throw new Error("Brak uprawnień: tylko autor może ukryć petycję");
+    }
+
+    petition.status = "archived";
+    await petition.save();
+  } catch (error) {
+    throw new Error("Nie udało się ukryć petycji: " + String(error));
   }
 };

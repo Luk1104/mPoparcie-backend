@@ -16,6 +16,7 @@ const PetitionSchema = new mongoose.Schema(
     deadline: { type: Date, required: true },
     votes: { type: Number, default: 0 },
     author: { type: String, required: true, trim: true },
+    status: { type: String, enum: ["active", "closed", "archived"], default: "active" },
   },
   { timestamps: true },
 );

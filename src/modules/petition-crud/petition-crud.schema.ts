@@ -40,8 +40,14 @@ export const CreatePetitionSchema = z
     deadline: z.string().refine((date) => !isNaN(Date.parse(date)), {
       message: "Nieprawidlowy format daty",
     }),
+    status: z.enum(["active", "closed", "archived"]).default("active"),
   })
   .strict();
 
+export const ArchivePetitionSchema = z.object({
+  petitionId: z.string().min(1, "ID petycji jest wymagane"),
+}).strict();
+
 export type CreatePetitionDTO = z.infer<typeof CreatePetitionSchema>;
 export type PetitionCategory = (typeof PETITION_CATEGORIES)[number];
+export type ArchivePetitionDTO = z.infer<typeof ArchivePetitionSchema>;
