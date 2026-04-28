@@ -10,6 +10,7 @@ services:
       - PORT=3000
       - JWT_SECRET="secret_key"
       - BCRYPT_SALT_ROUNDS=10
+      - CORS_ORIGIN=http://localhost:5173
 
   mongo:
     image: mongo:8.2
