@@ -80,7 +80,8 @@ export const getPetitionsFilteredService = async (
     const query: any = {};
     if (title) query.title = { $regex: title, $options: "i" };
     if (category) query.category = category;
-    if (status) query.status = status;
+    if (status !== "archived") query.status = status;
+    else query.status = "active";
 
     const pageNum = Math.max(1, Math.floor(Number(page) || 1));
 
