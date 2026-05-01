@@ -3,10 +3,7 @@ import { createPetition } from "./petition-crud.controller.js";
 import { getSinglePetition } from "./petition-crud.controller.js";
 import { getPetitionsFiltered } from "./petition-crud.controller.js";
 import { validateData } from "../../shared/middleware/validation.middleware.js";
-import {
-    ArchivePetitionSchema,
-    CreatePetitionSchema,
-} from "./petition-crud.schema.js";
+import { CreatePetitionSchema } from "./petition-crud.schema.js";
 import { archivePetition } from "./petition-crud.controller.js";
 import { verifyToken } from "../../shared/middleware/jwt.middleware.js";
 
@@ -19,15 +16,9 @@ router.post(
     createPetition,
 );
 
-router.post(
-    "/archive",
-    verifyToken,
-    validateData(ArchivePetitionSchema),
-    archivePetition,
-);
-
 router.get("/", getPetitionsFiltered);
 router.get("/:id", getSinglePetition);
+router.patch("/:id/archive", verifyToken, archivePetition);
 // router.get("/me", getPetition);
 
 export default router;

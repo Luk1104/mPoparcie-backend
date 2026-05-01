@@ -1,7 +1,6 @@
 import { PetitionModel } from "./petition-crud.model.js";
 import { type CreatePetitionDTO } from "./petition-crud.schema.js";
 import { PetitionUserModel } from "../petition-users/petition-users.model.js";
-import { VotingModel } from "../voting/voting.model.js";
 
 export const insertPetitionService = async (
     petitionData: CreatePetitionDTO,
@@ -38,6 +37,7 @@ export const insertPetitionService = async (
 export const archivePetitionService = async (
     petitionId: string,
     userId: string,
+    role: string,
 ) => {
     try {
         const petition = await PetitionModel.findById(petitionId);
@@ -45,16 +45,19 @@ export const archivePetitionService = async (
             throw new Error("Petycja nie znaleziona");
         }
 
-        if (
-            String(petition.author) !== String(userId) &&
-            String(userId) !== process.env.ADMIN_USER_ID
-        ) {
-            throw new Error("Brak uprawnień: tylko autor może ukryć petycję");
+        if (petition.author !== userId && role !== "admin") {
+            throw new Error(
+                "Brak uprawnień: tylko autor lub admin może zmienić status petycji",
+            );
         }
-
-        petition.status = "archived";
+        if (petition.status === "archived")
+            if (new Date() > petition.deadline) petition.status = "closed";
+            else petition.status = "active";
+        else petition.status = "archived";
         await petition.save();
     } catch (error) {
-        throw new Error("Nie udało się ukryć petycji: " + String(error));
+        throw new Error(
+            "Nie udało się zmienić statusu petycji: " + String(error),
+        );
     }
 };
