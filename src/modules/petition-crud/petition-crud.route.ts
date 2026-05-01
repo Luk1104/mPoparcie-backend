@@ -3,24 +3,27 @@ import { createPetition } from "./petition-crud.controller.js";
 import { getSinglePetition } from "./petition-crud.controller.js";
 import { getPetitionsFiltered } from "./petition-crud.controller.js";
 import { validateData } from "../../shared/middleware/validation.middleware.js";
-import { ArchivePetitionSchema, CreatePetitionSchema } from "./petition-crud.schema.js";
+import {
+    ArchivePetitionSchema,
+    CreatePetitionSchema,
+} from "./petition-crud.schema.js";
 import { archivePetition } from "./petition-crud.controller.js";
 import { verifyToken } from "../../shared/middleware/jwt.middleware.js";
 
 const router: Router = express.Router();
 
 router.post(
-  "/create",
-  verifyToken,
-  validateData(CreatePetitionSchema),
-  createPetition,
+    "/create",
+    verifyToken,
+    validateData(CreatePetitionSchema),
+    createPetition,
 );
 
 router.post(
-  "/archive",
-  verifyToken,
-  validateData(ArchivePetitionSchema),
-  archivePetition,
+    "/archive",
+    verifyToken,
+    validateData(ArchivePetitionSchema),
+    archivePetition,
 );
 
 router.get("/", getPetitionsFiltered);
