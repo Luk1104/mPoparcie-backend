@@ -3,6 +3,7 @@ import { insertPetitionService } from "./petition-update.service.js";
 import { getSinglePetitionService } from "./petition-read.service.js";
 import { getPetitionsFilteredService } from "./petition-read.service.js";
 import { archivePetitionService } from "./petition-update.service.js";
+import { getPetitionsByUserService } from "./petition-read.service.js";
 import type { CreatePetitionDTO } from "./petition-crud.schema.js";
 
 export const createPetition = async (
@@ -95,6 +96,30 @@ export const archivePetition = async (req: Request, res: Response) => {
             return res.status(403).json({ status: "error", message });
         }
 
+        return res
+            .status(500)
+            .json({ status: "error", message: message || "Wystąpił błąd" });
+    }
+};
+
+export const getPetitionsByUser = async (req: Request, res: Response) => {
+    try {
+        const user = (req as any).user;
+        const userId = user.userId;
+        if (!userId) {
+            return res.status(401).json({
+                status: "error",
+                message: "Brak tokenu lub niezalogowany użytkownik",
+            });
+        }
+        const data = await getPetitionsByUserService(userId);
+        return res.status(200).json({
+            status: "success",
+            message: "Petycje użytkownika pobrane pomyślnie",
+            data,
+        });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
         return res
             .status(500)
             .json({ status: "error", message: message || "Wystąpił błąd" });

@@ -1,5 +1,4 @@
 import { PetitionModel } from "./petition-crud.model.js";
-import { type CreatePetitionDTO } from "./petition-crud.schema.js";
 import { PetitionUserModel } from "../petition-users/petition-users.model.js";
 import { VotingModel } from "../voting/voting.model.js";
 
@@ -15,15 +14,13 @@ export const getSinglePetitionService = async (id?: string) => {
         if (!petition) {
             return null;
         }
-
+        const votesCount = petition.votes;
         const user = await PetitionUserModel.findById(petition.author);
         const displayName = user
             ? `${user.name} ${user.surname}`
             : "Nieznany Autor";
 
-        const votesCount = await VotingModel.countDocuments({
-            petitionId: petition._id,
-        });
+        await PetitionModel.updateOne({ _id: id }, { $inc: { views: 1 } });
 
         return {
             ...petition,
@@ -105,5 +102,18 @@ export const getPetitionsFilteredService = async (
         };
     } catch (error) {
         throw new Error("Failed to fetch petitions: " + String(error));
+    }
+};
+
+export const getPetitionsByUserService = async (userId: string) => {
+    try {
+        const petitions = await PetitionModel.find({ author: userId })
+            .select("_id title goal votes views status deadline")
+            .lean();
+        return petitions;
+    } catch (error) {
+        throw new Error(
+            "Nie udało się pobrać petycji użytkownika: " + String(error),
+        );
     }
 };
