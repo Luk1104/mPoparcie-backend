@@ -40,6 +40,7 @@ export const getPetitionsFilteredService = async (
     sortBy?: string,
     sortOrder?: string,
     status: string = "active",
+    role: string = "petition-user",
 ) => {
     try {
         const query: any = {};

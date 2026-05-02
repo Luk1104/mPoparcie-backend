@@ -50,6 +50,9 @@ export const getPetitionsFiltered = async (req: Request, res: Response) => {
         const { title, category, page, perPage, sortBy, sortOrder, status } =
             req.query;
 
+        const user = (req as any).user;
+        const role = user.role ? user.role : "petition-user";
+
         const pageNum = parseInt(page as string) || 1;
         const perPageNum = parseInt(perPage as string) || 20;
 
@@ -61,6 +64,7 @@ export const getPetitionsFiltered = async (req: Request, res: Response) => {
             sortBy as string | undefined,
             sortOrder as string | undefined,
             status as string | undefined,
+            role as string,
         );
 
         return res.status(200).json({ status: "success", data: result });
