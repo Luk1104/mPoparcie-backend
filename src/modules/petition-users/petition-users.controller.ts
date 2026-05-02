@@ -66,7 +66,8 @@ export const deleteUser = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
     const userId = user.userId;
-    await deleteUserService(userId);
+    const userRole = user.role;
+    await deleteUserService(userId, userRole);
     return res
       .status(200)
       .json({ status: "success", message: "Użytkownik usunięty" });

@@ -48,7 +48,10 @@ export const registerUser = async (data: RegisterDTO) => {
   return token;
 };
 
-export const deleteUserService = async (userId: string) => {
+export const deleteUserService = async (userId: string, userRole: string) => {
+  if (userRole !== "petition_user") {
+    throw new Error("Brak uprawnień: tylko zwykli użytkownicy mogą usunąć swoje konto");
+  }
   const deleted = await PetitionUserModel.findByIdAndDelete(userId);
   if (!deleted) throw new Error("Użytkownik nie istnieje");
 

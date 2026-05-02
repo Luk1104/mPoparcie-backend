@@ -12,7 +12,7 @@ export const createPetition = async (
 ) => {
     try {
         const user = (req as any).user;
-        await insertPetitionService(req.body, user.userId);
+        await insertPetitionService(req.body, user.userId, user.role);
         return res.status(201).json({
             status: "success",
             message: "Petycja utworzona pomyślnie",

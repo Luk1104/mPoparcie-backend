@@ -5,17 +5,23 @@ import { PetitionUserModel } from "../petition-users/petition-users.model.js";
 export const insertPetitionService = async (
     petitionData: CreatePetitionDTO,
     userId: string,
+    role: string,
 ) => {
+
+    if (role !== "user") {
+        throw new Error("Brak uprawnień: tylko użytkownicy mogą tworzyć petycje");
+    }
+    
     const { deadline, ...restData } = petitionData;
 
     try {
         const userExists = await PetitionUserModel.findById(userId);
         if (!userExists) {
-            throw new Error("User not found");
+            throw new Error("Nie znaleziono użytkownika");
         }
     } catch (error) {
         throw new Error(
-            "User from token not found in database: " + String(error),
+            "Nie znaleziono użytkownika: " + String(error),
         );
     }
 
@@ -30,7 +36,7 @@ export const insertPetitionService = async (
         await petition.save();
         return;
     } catch (error) {
-        throw new Error("Error while saving petition: " + String(error));
+        throw new Error("Błąd podczas zapisywania petycji: " + String(error));
     }
 };
 
