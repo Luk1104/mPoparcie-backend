@@ -50,3 +50,4 @@ seedAdmin().catch((err) => {
 	process.exit(1);
 });
 
+// npx tsx src/seed-admin.ts
