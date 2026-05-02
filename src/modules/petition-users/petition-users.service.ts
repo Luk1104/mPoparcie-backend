@@ -16,7 +16,7 @@ export const loginUser = async (data: LoginDTO) => {
   const token = generateToken({
     username: user.username,
     userId: user._id.toString(),
-    role: "petition_user",
+    role: user.role,
   });
 
   return token;
@@ -36,6 +36,7 @@ export const registerUser = async (data: RegisterDTO) => {
     passwordHash,
     name,
     surname,
+    role: "petition_user" //nie musi tego byc bo w modelu jest default ale dodaje tutaj
   });
 
   //Tutaj jest generowane po ._id ale mozna tez po username
