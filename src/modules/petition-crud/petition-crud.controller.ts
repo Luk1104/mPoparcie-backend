@@ -1,4 +1,4 @@
-import { type Request, type Response } from "express";
+import { type Request, type Response, type NextFunction } from "express";
 import { insertPetitionService } from "./petition-update.service.js";
 import { getSinglePetitionService } from "./petition-read.service.js";
 import { getPetitionsFilteredService } from "./petition-read.service.js";
@@ -9,6 +9,7 @@ import type { CreatePetitionDTO } from "./petition-crud.schema.js";
 export const createPetition = async (
     req: Request<any, any, CreatePetitionDTO>,
     res: Response,
+    next: NextFunction,
 ) => {
     try {
         const user = (req as any).user;
@@ -18,14 +19,11 @@ export const createPetition = async (
             message: "Petycja utworzona pomyślnie",
         });
     } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        return res
-            .status(400)
-            .json({ status: "error", message: message || "Wystąpił błąd" });
+        next(error);
     }
 };
 
-export const getSinglePetition = async (req: Request, res: Response) => {
+export const getSinglePetition = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id = req.params.id;
 
@@ -38,14 +36,11 @@ export const getSinglePetition = async (req: Request, res: Response) => {
 
         return res.status(200).json({ status: "success", data: petition });
     } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        return res
-            .status(500)
-            .json({ status: "error", message: message || "Wystąpił błąd" });
+        next(error);
     }
 };
 
-export const getPetitionsFiltered = async (req: Request, res: Response) => {
+export const getPetitionsFiltered = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { title, category, page, perPage, sortBy, sortOrder, status } =
             req.query;
@@ -69,14 +64,11 @@ export const getPetitionsFiltered = async (req: Request, res: Response) => {
 
         return res.status(200).json({ status: "success", data: result });
     } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        return res
-            .status(500)
-            .json({ status: "error", message: message || "Wystąpił błąd" });
+        next(error);
     }
 };
 
-export const archivePetition = async (req: Request, res: Response) => {
+export const archivePetition = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const user = (req as any).user ?? {};
         const userId = String(user.userId);
@@ -95,18 +87,14 @@ export const archivePetition = async (req: Request, res: Response) => {
             .status(200)
             .json({ status: "success", message: "Petycja ukryta pomyślnie" });
     } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        if (String(message).includes("Brak uprawnień")) {
-            return res.status(403).json({ status: "error", message });
+        // const message = error instanceof Error ? error.message : String(error);
+        // if (String(message).includes("Brak uprawnień")) {
+        //     return res.status(403).json({ status: "error", message });
+        next(error);
         }
-
-        return res
-            .status(500)
-            .json({ status: "error", message: message || "Wystąpił błąd" });
-    }
 };
 
-export const getPetitionsByUser = async (req: Request, res: Response) => {
+export const getPetitionsByUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const user = (req as any).user;
         const userId = user.userId;
@@ -123,9 +111,6 @@ export const getPetitionsByUser = async (req: Request, res: Response) => {
             data,
         });
     } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        return res
-            .status(500)
-            .json({ status: "error", message: message || "Wystąpił błąd" });
+        next(error);
     }
 };
