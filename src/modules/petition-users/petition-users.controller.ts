@@ -64,9 +64,13 @@ export const register = async (
 
 export const deleteUser = async (req: Request, res: Response) => {
   try {
-    const user = (req as any).user;
-    const userId = user.userId;
-    await deleteUserService(userId);
+    const user = (req as any).user ?? {};
+    const userId = String(user.userId ?? "");
+    const userRole = String(user.role ?? "petition_user");
+    if (!userId) {
+      return res.status(401).json({ status: "error", message: "Brak tokenu lub niezalogowany użytkownik" });
+    }
+    await deleteUserService(userId, userRole);
     return res
       .status(200)
       .json({ status: "success", message: "Użytkownik usunięty" });

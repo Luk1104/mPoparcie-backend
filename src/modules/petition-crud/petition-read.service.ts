@@ -40,13 +40,25 @@ export const getPetitionsFilteredService = async (
     sortBy?: string,
     sortOrder?: string,
     status: string = "active",
+    role: string = "none",
 ) => {
     try {
         const query: any = {};
         if (title) query.title = { $regex: title, $options: "i" };
         if (category) query.category = category;
-        if (status !== "archived") query.status = status;
-        else query.status = "active";
+        
+        if (role === "none"){
+            if (status !== "archived") query.status = status;
+             else query.status = "active";
+        }
+        else if (role === "petition_user"){ //tego chyba nie musi byc
+            if (status !== "archived") query.status = status;
+             else query.status = "active";
+        }
+        else if (role === "admin") {
+            console.log("Admin role detected, applying status filter:", status);
+            query.status = status;
+        }
 
         const pageNum = Math.max(1, Math.floor(Number(page) || 1));
 

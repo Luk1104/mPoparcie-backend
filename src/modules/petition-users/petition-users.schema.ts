@@ -22,8 +22,8 @@ export const registerSchema = z
   .strict();
 
 export const loginSchema = z.object({
-  username: z.string().min(3, "Nazwa użytkownika musi mieć minimum 3 znaki"),
-  password: z.string().min(1, "Hasło jest wymagane"),
+  username: z.string().min(3, "Nazwa użytkownika musi mieć minimum 3 znaki").max(16, "Nazwa użytkownika może mieć maksymalnie 16 znaków"),
+  password: z.string().min(1, "Hasło jest wymagane").max(100, "Hasło może mieć maksymalnie 100 znaków"),
 });
 
 export type RegisterDTO = z.infer<typeof registerSchema>;

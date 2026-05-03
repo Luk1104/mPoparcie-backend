@@ -47,3 +47,30 @@ export const verifyToken = (req: Request, res: Response, next: NextFunction) => 
     return res.status(403).json({ error: 'Nieważny lub wygasły token' });
   }
 };
+
+// Attach user if a valid token is present in cookies, but allow unauthenticated requests.
+export const attachUserIfExists = (req: Request, _res: Response, next: NextFunction) => {
+  const cookieHeader = req.headers.cookie as string | undefined;
+  let token: string | undefined;
+  if (cookieHeader) {
+    const cookies = cookieHeader.split(';').map(c => c.trim());
+    const tokenCookie = cookies.find(c => c.startsWith('token='));
+    if (tokenCookie) token = decodeURIComponent(tokenCookie.split('=')[1] || '');
+  }
+
+  if (!token) return next();
+
+  try {
+    const secret = (process.env.JWT_SECRET as string) || 'secretkey';
+    if (!process.env.JWT_SECRET) {
+      console.warn('JWT_SECRET is not set — using default secretkey (not secure for production)');
+    }
+    const decoded = jwt.verify(token, secret) as TokenPayload;
+    (req as any).user = decoded;
+  } catch (err) {
+    // Invalid token — ignore and continue without user attached
+    console.warn('attachUserIfExists: invalid token, proceeding unauthenticated');
+  }
+
+  return next();
+};
