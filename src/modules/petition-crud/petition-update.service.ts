@@ -8,7 +8,7 @@ export const insertPetitionService = async (
     role: string,
 ) => {
 
-    if (role !== "user") {
+    if (role !== "petition_user") {
         throw new Error("Brak uprawnień: tylko użytkownicy mogą tworzyć petycje");
     }
     
