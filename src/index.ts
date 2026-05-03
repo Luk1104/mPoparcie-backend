@@ -4,6 +4,7 @@ import cors from "cors";
 
 import petitionUsersRoute from "./modules/petition-users/petition-users.route.js";
 import petitionCrudRoute from "./modules/petition-crud/petition-crud.route.js";
+import { errorHandler } from "./shared/middleware/error.middleware.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,6 +21,8 @@ app.use(express.json());
 
 app.use("/api/petition/user", petitionUsersRoute);
 app.use("/api/petition", petitionCrudRoute);
+
+app.use(errorHandler);
 
 mongoose
   .connect(process.env.MONGO_URI as string)
