@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { PETITION_CATEGORIES } from "./petition-crud.schema.js";
+import cron from "node-cron";
 
 const PetitionSchema = new mongoose.Schema(
     {
@@ -27,3 +28,22 @@ const PetitionSchema = new mongoose.Schema(
 );
 
 export const PetitionModel = mongoose.model("Petition", PetitionSchema);
+
+//Zmiana stausu petycji active -> close po upłynieciu deadline
+
+console.log("[cron] initializing cron jobs");
+
+// Run every day at midnight (server local time)
+cron.schedule("0 0 * * *", () => {
+    console.log("Staring cron job");
+    PetitionModel.updateMany(
+        { deadline: { $lte: new Date() }, status: "active" },
+        { $set: { status: "closed" } }
+    )
+    .then(result => {
+        console.log(`[cron] Updated ${result.modifiedCount} petitions to closed status`);
+    })
+    .catch(error => {
+        console.error("[cron] Error updating petition statuses:", error);
+    });
+});

@@ -14,6 +14,14 @@ export const insertPetitionService = async (
     
     const { deadline, ...restData } = petitionData;
 
+    //Sprawdanie poprawnosci daty
+    if (isNaN(Date.parse(deadline))) {
+        throw new Error("Nieprawidłowa data: deadline musi być poprawną datą (format)");
+    }
+    else if (new Date(deadline) <= new Date()) {
+        throw new Error("Nieprawidłowa data: deadline musi być datą w przyszłości");
+    }
+
     try {
         const userExists = await PetitionUserModel.findById(userId);
         if (!userExists) {
