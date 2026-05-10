@@ -1,12 +1,15 @@
 import { type Request, type Response, type NextFunction } from "express";
-import { zkprequestuserHashService, zkpregisterService} from "./zkp-users.service.js";
+import {
+  zkprequestuserHashService,
+  zkpregisterService,
+} from "./zkp-users.service.js";
 import type { RegisterDTO } from "./zkp-users.schema.js";
 import { zkpTreeDumpService } from "./zkp-users.service.js";
 
 export const zkprequestuserHash = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     // w tokenie jest userHash
@@ -23,7 +26,7 @@ export const zkprequestuserHash = async (
 
     return res
       .status(201)
-      .json({ status: "success", message: "Rejestracja/1 udana"});
+      .json({ status: "success", message: "Rejestracja/1 udana" });
   } catch (error) {
     next(error);
   }
@@ -32,10 +35,10 @@ export const zkprequestuserHash = async (
 export const zkpregister = async (
   req: Request<any, any, RegisterDTO>,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
-    const userHash = (req as any).user?.userHash;
+    const userHash = (req as any).user?.userId;
     const commitment = req.body?.commitment;
 
     if (!userHash) {
@@ -54,7 +57,7 @@ export const zkpregister = async (
 export const zkpTreeDump = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const treeData = await zkpTreeDumpService();
