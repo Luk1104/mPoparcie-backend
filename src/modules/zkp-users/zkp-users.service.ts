@@ -1,64 +1,66 @@
-import bcrypt from "bcrypt";
-import crypto from "crypto";
 import { ZkpUserModel } from "./zkp-users.model.js";
-import type { RegisterDTO } from "./zkp-users.schema.js";
+import { mockRegister } from "./mock-register.js";
 
-// Helper function to encrypt text using AES-256-GCM
-const encryptWithAES256 = (textToEncrypt: string, password: string) => {
-  // 1. Generate a random salt for key derivation
-  const salt = crypto.randomBytes(16);
+import { ZkpMetadataModel, ZkpCommitmentModel } from "./merkle-tree.model.js";
+import { addMemberToTree, buildSemaphoreGroup} from "./merkle-tree-functions.js";
 
-  // 2. Derive a 32-byte key from the password using scrypt
-  const key = crypto.scryptSync(password, salt, 32);
+export const zkprequestuserHashService = async () => {
 
-  // 3. Generate a random Initialization Vector (IV) - 12 bytes is standard for GCM
-  const iv = crypto.randomBytes(12);
+  // zamokowana i niekompletna funkcja - czekamy na identta
+  const userHash = await mockRegister();
+  //prawodopodobnie będzie tu odwołanie do funkcji komunikuajcych sie z identt
 
-  // 4. Create the Cipher
-  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
-
-  // 5. Encrypt the text
-  let encryptedText = cipher.update(textToEncrypt, "utf8", "hex");
-  encryptedText += cipher.final("hex");
-
-  // 6. Get the authentication tag (verifies data wasn't tampered with)
-  const authTag = cipher.getAuthTag();
-
-  return {
-    encryptedData: encryptedText,
-    salt: salt.toString("hex"),
-    iv: iv.toString("hex"),
-    authTag: authTag.toString("hex"),
-  };
+  return userHash;
 };
 
-export const registerUser = async (data: RegisterDTO) => {
-  // zamokowana i niekompletna funkcja - czekamy na identta
-  const { username, password } = data;
+export const zkpregisterService = async (
+  userHash: string,
+  commitment: string
+) => {
+  // zapisanie userhash w bazie danych
+  const existing = await ZkpUserModel.findOne({ userHash });
+  if (existing) throw new Error("Taka osoba już jest zarejestrowana");
 
-  const SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS) || 10;
-  const usernameHash = await bcrypt.hash(username, SALT_ROUNDS);
+  const created = await ZkpUserModel.create({ userHash });
+  if (!created) throw new Error("Nie udało się zarejestrować użytkownika");
 
-  const existing = await ZkpUserModel.findOne({ usernameHash });
-  if (existing) throw new Error("Użytkownik o takiej nazwie już istnieje");
+  try {
+    // zapisanie do drzewa Merkle'a (domyślny groupId = "1")
+    await addMemberToTree(commitment);
 
-  // 1. Generate a random string and hash it with SHA-256
-  const randomBytes = crypto.randomBytes(32);
-  const randomSha256Hash = crypto
-    .createHash("sha256")
-    .update(randomBytes)
-    .digest("hex");
+    // odbuduj grupę i odczytaj aktualny root
+    const group = await buildSemaphoreGroup();
+    const root = (group && (group as any).root) ?? null;
+    console.log("Nowy korzeń:", root);
 
-  // 2. Encrypt the SHA-256 hash using the user's password
-  const encryptedPayload = encryptWithAES256(randomSha256Hash, password);
+    // jeśli doszliśmy tu bez błędów — zwróć sukces
+    return true;
+  } catch (error) {
+    console.error("Błąd podczas rejestracji ZKP:", error);
+    // rollback: usuń utworzonego użytkownika, jeśli istnieje
+    try {
+      if (created && created._id) {
+        await ZkpUserModel.deleteOne({ _id: created._id }).exec();
+      }
+    } catch (rollbackErr) {
+      console.error("Rollback failed:", rollbackErr);
+    }
+    throw error;
+  }
+};
 
-  const created = await ZkpUserModel.create({
-    username: usernameHash,
-    userHash: encryptedPayload.encryptedData,
-    salt: encryptedPayload.salt,
-    iv: encryptedPayload.iv,
-    authTag: encryptedPayload.authTag,
-  });
+export const zkpTreeDumpService = async (groupId: string = "1") => {
+  try {
 
-  return { success: true, message: "Rejestracja udana"};
+    const root = await ZkpMetadataModel.find({ groupId }).sort("index").exec();
+
+    // Pobierz surowe wpisy z bazy tej samej grupy (posortowane po indeksie)
+    const members = await ZkpCommitmentModel.find({ groupId }).sort("index").exec();
+
+    return { root, members };
+
+  } catch (error) {
+    console.error("Błąd podczas dumpowania drzewa:", error);
+    throw new Error("Nie udało się pobrać danych drzewa");
+  }
 };
