@@ -1,4 +1,4 @@
-import { type Request, type Response } from "express";
+import { type Request, type Response, type NextFunction } from "express";
 import {
   registerUser,
   loginUser,
@@ -9,6 +9,7 @@ import type { RegisterDTO, LoginDTO } from "./petition-users.schema.js";
 export const login = async (
   req: Request<any, any, LoginDTO>,
   res: Response,
+  next: NextFunction
 ) => {
   try {
     const token = await loginUser(req.body);
@@ -18,7 +19,7 @@ export const login = async (
         // secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         path: "/",
-        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
     }
 
@@ -26,17 +27,14 @@ export const login = async (
       .status(200)
       .json({ status: "success", message: "Login successful" });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.log("Error in login controller:", message);
-    return res
-      .status(500)
-      .json({ status: "error", message: message || "Wystąpił błąd podczas logowania" });
+    next(error);
   }
 };
 
 export const register = async (
   req: Request<any, any, RegisterDTO>,
   res: Response,
+  next: NextFunction
 ) => {
   try {
     const token = await registerUser(req.body);
@@ -46,7 +44,7 @@ export const register = async (
         // secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         path: "/",
-        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
     }
 
@@ -54,30 +52,20 @@ export const register = async (
       .status(201)
       .json({ status: "success", message: "Rejestracja udana"});
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.log("Error in register controller:", message);
-    return res
-      .status(500)
-      .json({ status: "error", message: message || "Wystąpił błąd podczas rejestracji" });
+    next(error);
   }
 };
 
-export const deleteUser = async (req: Request, res: Response) => {
+export const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = (req as any).user;
     const userId = user.userId;
-    await deleteUserService(userId);
+    const userRole = user.role;
+    await deleteUserService(userId, userRole);
     return res
       .status(200)
       .json({ status: "success", message: "Użytkownik usunięty" });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.log("Error in delete user controller:", message);
-    return res
-      .status(500)
-      .json({
-        status: "error",
-        message: message || "Wystąpił błąd podczas usuwania użytkownika",
-      });
+    next(error);
   }
 };
