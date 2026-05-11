@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { time } from "node:console";
 
 const zkpCommitmentSchema = new mongoose.Schema(
   {
@@ -18,22 +19,19 @@ const zkpCommitmentSchema = new mongoose.Schema(
       required: true,
       default: "1",
     },
-    // currentRoot: {
-    //   type: String,
-    //   required: true,
-    // },
   },
-  { timestamps: true }, //niewiem czy potrzebne
 );
 
 //Tworzymy indeks złożony, aby upewnić się, że nikt nie zajmie tego samego miejsca w drzewie
 zkpCommitmentSchema.index({ groupId: 1, index: 1 }, { unique: true });
 
 const zkpMetadataSchema = new mongoose.Schema({
-  groupId: { type: String, required: true, unique: true },
+  groupId: { type: String, required: true, default: "1" },
   currentRoot: { type: String, required: true },
   lastIndex: { type: Number, required: true, default: -1 },
-});
+},
+  {timestamps: true},
+);
 
 export const ZkpMetadataModel = mongoose.model(
   "ZkpMetadata",

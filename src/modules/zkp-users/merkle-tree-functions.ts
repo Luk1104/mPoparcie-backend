@@ -5,7 +5,15 @@ export const addMemberToTree = async (
   commitment: string,
   groupId: string = "1",
 ) => {
-  try {
+  // try {
+
+    // Sprawdzamy czy taki commitment juz istnnieje
+    const existingCommitment = await ZkpCommitmentModel.findOne({ commitment, groupId }).exec();
+    if (existingCommitment) {
+      console.error("Commitment już istnieje w drzewie");
+      throw new Error("Commitment już istnieje w drzewie");
+    }
+
     // 1. Znajdź użytkownika z najwyższym indeksem w danej grupie
     const lastMember = await ZkpCommitmentModel.findOne({ groupId })
       .sort("-index") // Sortowanie malejące po indeksie
@@ -26,10 +34,10 @@ export const addMemberToTree = async (
 
     console.log(`Dodano do drzewa na pozycji: ${nextIndex}`);
     //return newZkpCommitment;
-  } catch (error) {
-    console.error("Błąd zapisu do drzewa:", error);
-    throw new Error("Nie udało się dodać użytkownika do Drzewa Merkle'a");
-  }
+  // } catch (error) {
+  //   console.error("Błąd zapisu do drzewa:", error);
+  //   throw new Error("Nie udało się dodać użytkownika do Drzewa Merkle'a");
+  // }
 };
 
 export const buildSemaphoreGroup = async (
@@ -40,14 +48,15 @@ export const buildSemaphoreGroup = async (
     .sort("index")
     .exec();
 
-  // Może id groupy trzeba podać i głębokość
-  const group = new Group();
-
+  let array: string[] = [];
   // Dodajemy czlonków do grupy (drzewa)
   //Muszą być dodawani dokładnie w takiej kolejności, jak w bazie
   for (const member of members) {
-    group.addMember(member.commitment);
+    array.push(member.commitment);
   }
+
+  // Może id groupy trzeba podać i głębokość
+  const group = new Group(array);
 
   // Aktualizuj metadane (aktualny korzeń)
   const metadata = await ZkpMetadataModel.findOneAndUpdate(

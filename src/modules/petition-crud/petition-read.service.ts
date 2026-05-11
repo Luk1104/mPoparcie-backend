@@ -40,14 +40,14 @@ export const getPetitionsFilteredService = async (
     sortBy?: string,
     sortOrder?: string,
     status: string = "active",
-    role: string = "none",
+    role: string = "zkp-user",
 ) => {
     try {
         const query: any = {};
         if (title) query.title = { $regex: title, $options: "i" };
         if (category) query.category = category;
         
-        if (role === "none"){
+        if (role === "zkp-user"){
             if (status !== "archived") query.status = status;
              else query.status = "active";
         }

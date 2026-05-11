@@ -43,12 +43,14 @@ export const zkpregisterService = async (
 
     // jeśli doszliśmy tu bez błędów — zwróć sukces
     return true;
+    
   } catch (error) {
     console.error("Błąd podczas rejestracji ZKP:", error);
-    // rollback: usuń utworzonego użytkownika, jeśli istnieje
+    // rollback: usuń utworzonego użytkownika(userhash), jeśli istnieje
     try {
       if (created && created._id) {
         await ZkpUserModel.deleteOne({ _id: created._id }).exec();
+        console.log("Rollback: usunięto utworzonego użytkownika");
       }
     } catch (rollbackErr) {
       console.error("Rollback failed:", rollbackErr);
