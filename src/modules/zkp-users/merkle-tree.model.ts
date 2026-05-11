@@ -34,10 +34,10 @@ const zkpMetadataSchema = new mongoose.Schema({
 );
 
 export const ZkpMetadataModel = mongoose.model(
-  "ZkpMetadata",
+  "ZkpRoots",
   zkpMetadataSchema,
 );
 export const ZkpCommitmentModel = mongoose.model(
-  "ZkpCommitment",
+  "MerkleTree",
   zkpCommitmentSchema,
 );
