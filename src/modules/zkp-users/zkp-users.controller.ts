@@ -60,7 +60,8 @@ export const zkpTreeDump = async (
   next: NextFunction,
 ) => {
   try {
-    const treeData = await zkpTreeDumpService();
+    const groupId  = req.params.groupId;
+    const treeData = await zkpTreeDumpService(groupId as string);
     return res.status(200).json({ status: "success", data: treeData });
   } catch (error) {
     next(error);

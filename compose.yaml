@@ -11,6 +11,9 @@ services:
       - JWT_SECRET="secret_key"
       - BCRYPT_SALT_ROUNDS=10
       - CORS_ORIGIN=http://localhost:5173
+      - ADMIN_USERNAME=admin1
+      - ADMIN_PASSWORD=admin123
+      - BUCKET_COMMITMENT_LIMIT=2
 
   mongo:
     image: mongo:8.2

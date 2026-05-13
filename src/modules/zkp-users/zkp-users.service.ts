@@ -2,11 +2,13 @@ import { ZkpUserModel } from "./zkp-users.model.js";
 import { mockRegister } from "./mock-register.js";
 import { generateToken } from "../../shared/utils/jwt.util.js";
 
-import { ZkpMetadataModel, ZkpCommitmentModel } from "./merkle-tree.model.js";
+import { ZkpBucketsModel, ZkpCommitmentModel } from "./merkle-tree.model.js";
 import {
   addMemberToTree,
   buildSemaphoreGroup,
+  assignGroupIdToCommitment,
 } from "./merkle-tree-functions.js";
+import { number } from "zod";
 
 export const zkprequestuserHashService = async () => {
   // zamokowana i niekompletna funkcja - czekamy na identta
@@ -34,10 +36,17 @@ export const zkpregisterService = async (
   if (!created) throw new Error("Nie udało się zarejestrować użytkownika");
 
   try {
-    // zapisanie do drzewa Merkle'a (domyślny groupId = "1")
-    await addMemberToTree(commitment);
+
+    let numberofbuckets = await ZkpBucketsModel.countDocuments().exec();
+    
+    if (numberofbuckets === 0) numberofbuckets = 1; // zabezpieczenie przed dzieleniem przez zero, powinien być zawsze przynajmniej 1 bucket
+    //wyliczenie do jakiego bucketu przydzielić commitment
+    const groupId = await assignGroupIdToCommitment(BigInt(commitment), numberofbuckets);
+    
+    // zapisanie do drzewa Merkle'a
+    await addMemberToTree(commitment, groupId.toString());
     // odbuduj grupę i odczytaj aktualny root
-    const group = await buildSemaphoreGroup();
+    const group = await buildSemaphoreGroup(groupId.toString());
     const root = (group && (group as any).root) ?? null;
     console.log("Nowy korzeń:", root);
 
@@ -59,9 +68,9 @@ export const zkpregisterService = async (
   }
 };
 
-export const zkpTreeDumpService = async (groupId: string = "1") => {
+export const zkpTreeDumpService = async (groupId: string) => {
   try {
-    const root = await ZkpMetadataModel.find({ groupId }).sort("index").exec();
+    const root = await ZkpBucketsModel.find({ groupId }).sort("index").exec();
 
     // Pobierz surowe wpisy z bazy tej samej grupy (posortowane po indeksie)
     const members = await ZkpCommitmentModel.find({ groupId })

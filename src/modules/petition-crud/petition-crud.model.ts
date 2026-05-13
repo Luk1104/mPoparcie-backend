@@ -31,7 +31,7 @@ export const PetitionModel = mongoose.model("Petition", PetitionSchema);
 
 //Zmiana stausu petycji active -> close po upłynieciu deadline
 
-console.log("[cron] initializing cron jobs");
+console.log("[cron] initializing cron jobs -> updating petitions statuses", new Date().toLocaleString());
 
 // Run every day at midnight (server local time)
 cron.schedule("0 0 * * *", () => {

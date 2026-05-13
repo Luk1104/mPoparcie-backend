@@ -10,6 +10,6 @@ const router: Router = express.Router();
 
 router.get("/register/1", zkprequestuserHash);
 router.post("/register/2", verifyToken, validateData(zkpregisterSchema), zkpregister);
-router.get("/tree-dump", zkpTreeDump);
+router.get("/tree-dump/:groupId", zkpTreeDump);
 
 export default router;

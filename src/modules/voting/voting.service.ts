@@ -1,7 +1,7 @@
 import { verifyProof } from "@semaphore-protocol/proof";
 import { type SemaphoreProofDTO } from "./voting.schema.js";
 import {
-  ZkpMetadataModel,
+  ZkpBucketsModel,
   ZkpCommitmentModel,
 } from "../zkp-users/merkle-tree.model.js";
 import { PetitionModel } from "../petition-crud/petition-crud.model.js";
@@ -36,7 +36,7 @@ export const verifyVoteService = async (
     throw new Error("Dowód dotyczy innej petycji (niezgodny zakres/scope)");
   }
 
-  const metadata = await ZkpMetadataModel.findOne({ groupId: "1" }).exec();
+  const metadata = await ZkpBucketsModel.findOne({ groupId: "1" }).exec();
   if (!metadata) {
     throw new Error("Nie znaleziono korzenia drzewa");
   }
