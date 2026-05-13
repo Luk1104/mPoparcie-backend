@@ -1,12 +1,9 @@
 import { verifyProof } from "@semaphore-protocol/proof";
 import { type SemaphoreProofDTO } from "./voting.schema.js";
-import {
-  ZkpMetadataModel,
-  ZkpCommitmentModel,
-} from "../zkp-users/merkle-tree.model.js";
+import { ZkpMetadataModel } from "../zkp-users/merkle-tree.model.js";
+import { type zkpTreeDumpService } from "../zkp-users/zkp-users.service.js";
 import { PetitionModel } from "../petition-crud/petition-crud.model.js";
 import { VotingModel } from "./voting.model.js";
-import { buildSemaphoreGroup } from "../zkp-users/merkle-tree-functions.js";
 import { encodeBytes32String, toBigInt } from "ethers";
 
 const signPetition = async (petitionId: string, nullifier: string) => {
@@ -71,19 +68,15 @@ export const verifyVoteService = async (
   return true;
 };
 
-export const getPathService = async (commitment: string) => {
-  const member = await ZkpCommitmentModel.findOne({
-    commitment,
-    groupId: "1",
-  }).exec();
-
-  if (!member) {
-    throw new Error("Nie znaleziono podanego commitmentu w drzewie");
-  }
-
-  const group = await buildSemaphoreGroup("1");
-
-  const merkleProof = group.generateMerkleProof(member.index);
-
-  return merkleProof;
+export const getCommitmentsArrayService = async (
+  group: Awaited<ReturnType<typeof zkpTreeDumpService>>,
+) => {
+  const membersArray = Array.isArray(group.members) ? group.members : [];
+  const sortedMembers = [...membersArray].sort((a, b) => a.index - b.index);
+  const commitments = sortedMembers.map((memberObj) => {
+    return memberObj.commitment
+      ? memberObj.commitment.toString()
+      : memberObj.toString();
+  });
+  return commitments;
 };
