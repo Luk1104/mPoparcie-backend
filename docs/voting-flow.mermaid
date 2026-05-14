@@ -1,0 +1,65 @@
+%% Głosowanie
+sequenceDiagram
+
+    title Głosowanie ZKP
+
+    actor User as User (Frontend)
+    participant Backend
+    participant Database
+    participant MerkleTree as Merkle Tree
+
+    Note over User: Użytkownik klika "Podpisz petycję"
+
+    %% === KROK: Potwierdzenie tożsamości ===
+
+    rect rgb(240, 248, 255)
+        Note over User: Wybór metody potwierdzenia tożsamości
+        User->>User: Utworzenie klucza z hasła lub passkey
+        User->>User: Odtworzenie tożsamości Semaphore z klucza<br/>- deterministyczne
+    end
+
+    %% === KROK: Pobranie danych grupy ===
+    rect rgb(240, 255, 240)
+        Note over User,Database: Pobranie aktualnego stanu drzewa
+        User->>Backend: Żądanie listy członków grupy
+
+        Backend->>Database: Pobranie wszystkich kluczy publicznych (commitmentów) z grupy
+        Database-->>Backend: Posortowane commitmenty
+        Backend-->>User: Lista kluczy publicznych
+    end
+
+    %% === KROK: Budowa dowodu po stronie klienta ===
+    rect rgb(248, 240, 255)
+        Note over User,MerkleTree: Generowanie dowodu zero-knowledge (klient)
+
+        User->>User: Zbudowanie lokalnego drzewa Merkle'a<br/>z otrzymanych kluczy publicznych
+
+        User->>User: Wyszukanie własnego klucza publicznego w drzewie
+        Note over User: Jeśli użytkownika nie ma w drzewie, wyświetlamy błąd.<br/>Sprawdzenie jest lokalne — dowód nie będzie poprawny.
+
+        User->>User: Wygenerowanie ścieżki Merkle'a (od liścia do korzenia)
+
+        User->>User: Wygenerowanie dowodu ZKP
+        Note over User: Parametry do dowodu:<br/>• tożsamość (klucz prywatny)<br/>• dowód Merkle'a (ścieżka)<br/>• wiadomość = głos "za" (wartość stała: 1)<br/>• scope = ID petycji<br/><br/>Wynik:<br/>• nullifier — unikalny identyfikator głosu<br/>• korzeń drzewa Merkle'a<br/>• skompresowany dowód kryptograficzny
+    end
+
+    %% === KROK: Weryfikacja i zapis głosu ===
+    rect rgb(255, 255, 240)
+        Note over User,Database: Weryfikacja dowodu i zapis głosu
+
+        User->>Backend: Wysłanie dowodu ZKP wraz z ID petycji
+
+        Backend->>Database: Sprawdzenie, czy petycja istnieje
+        Backend->>Database: Sprawdzenie, czy taki głos już istnieje (czy użytkownik już głosował)
+        Database-->>Backend: OK / istnieje lub nie
+
+        Backend->>MerkleTree: Sprawdzenie, czy korzeń i wynik dowodu się zgadzają i są aktualne
+        MerkleTree-->>Backend: OK
+
+        Backend->>Backend: Weryfikacja matematyczna dowodu ZKP
+        Note over Backend: Weryfikacja obliczeń jest kosztowna, więc wykonujemy ją na końcu.<br/>Jeśli cokolwiek nie zwróci prawdy — zwracamy błąd.
+
+        Backend-->>User: Informacja o wyniku (sukces / błąd)
+    end
+
+    Note over User: Wyświetlenie komunikatu sukcesu<br/>Odświeżenie danych petycji
