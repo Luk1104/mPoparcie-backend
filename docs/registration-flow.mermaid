@@ -1,67 +1,71 @@
 %% Głosowanie
 sequenceDiagram
-
-    title Głosowanie ZKP
+    title Rejestracja ZKP Usera
 
     actor User as User (Frontend)
     participant Backend
     participant Database
     participant MerkleTree as Merkle Tree
+    participant Identt
 
-    Note over User: Użytkownik klika "Podpisz petycję"
+    Note over User: Użytkownik klika "Zarejestruj z mObywatel"
 
-    %% === KROK: Potwierdzenie tożsamości ===
-
+    %% === KROK 1: Rozpoczęcie sesji rejestracyjnej ===
     rect rgb(240, 248, 255)
-        Note over User: Wybór metody potwierdzenia tożsamości
-        User->>User: Utworzenie klucza z hasła lub passkey
-        User->>User: Odtworzenie tożsamości Semaphore z klucza<br/>- deterministyczne
+        Note over User,Backend: Krok 1 — Weryfikacja tożsamości obywatela
+        User->>Backend: Żądanie rozpoczęcia rejestracji
+        Note over Backend: Weryfikacja tożsamości<br/>przez mObywatel
+        alt Mock
+            Backend->>Backend: Generowanie tokenu sesji<br/>z unikalnym userhashem (losowy)
+        else Produkcja
+            Backend->>Identt: Przekierowanie użytkownika do panelu identta. (proxy)
+            Identt->>Identt: Użytkownik loguje się tam przez mObywatel
+            Identt->>Identt: Generowany jest unikalny, deterministyczny userhash z danych osobowych
+            Identt-->>Backend: Zwraca tylko userhash
+        end
+        Backend-->>User: Token sesji rejestracyjnej<br/>(ważny kilka minut, w ciasteczku HTTP)
+        Note over User,Backend: Token zawiera userhasha. <br>To jedyny moment, w którym opuszcza backend.
     end
 
-    %% === KROK: Pobranie danych grupy ===
+    %% === KROK: Tworzenie tożsamości kryptograficznej ===
+    rect rgb(255, 248, 240)
+        Note over User: Użytkownik wybiera metodę zabezpieczenia
+        Note over User: Ważne. Już zawsze musi wybierać tę samą metodę podczas glosowania.
+        alt Passkey (biometria / klucz sprzętowy)
+            User->>User: Tworzenie klucza Passkey<br/>przy użyciu WebAuthn PRF
+            User->>User: Uzyskanie klucza prywatnego<br/>z rozszerzenia PRF
+        else Hasło tradycyjne
+            User->>User: Tworzenie klucza prywatnego<br/>z hasła użytkownika (PBKDF2)
+        end
+        User->>User: Wygenerowanie tożsamości Semaphore<br/>na podstawie sekretu
+        Note over User: Tożsamość zawiera:<br/>• klucz prywatny (secretScalar)<br/>• klucz publiczny (commitment)
+    end
 
+    %% === KROK 2: Rejestracja tożsamości w systemie ===
     rect rgb(240, 255, 240)
-        Note over User,Database: Pobranie aktualnego stanu drzewa
-        User->>Backend: Żądanie listy członków grupy
-
-        Backend->>Database: Pobranie wszystkich kluczy publicznych (commitmentów) z grupy
-        Database-->>Backend: Posortowane commitmenty
-        Backend-->>User: Lista kluczy publicznych
+        Note over User,Database: Krok 2 — Zapis tożsamości
+        User->>Backend: Wysłanie klucza publicznego (commitment)<br/>wraz z tokenem sesji
+        Backend->>Backend: Weryfikacja tokenu sesji
+        Backend->>Database: Sprawdzenie czy userhash<br/>nie jest już zarejestrowany
+        Database-->>Backend: Użytkownik nie istnieje
+        Backend->>Database: Sprawdzenie czy commitment nie jest juz zarejestrowany.
+        Database-->>Backend: Commitment nie istnieje.
+        Backend->>MerkleTree: Dodanie klucza publicznego<br/>do drzewa na kolejnej pozycji
+        MerkleTree->>Database: Zapis commitment z indeksem
+        Database-->>MerkleTree: OK
+        Backend->>Database: Zapisanie identyfikatora użytkownika
+        Database-->>Backend: OK
+        Backend->>MerkleTree: Przebudowa drzewa Merkle'a
+        MerkleTree->>Database: Pobranie wszystkich commitments
+        Database-->>MerkleTree: Lista commitments
+        Note over MerkleTree: Odbudowa drzewa<br/>i obliczenie nowego korzenia
+        MerkleTree->>Database: Aktualizacja korzenia drzewa
+        Database-->>MerkleTree: OK
+        Backend-->>User: Rejestracja zakończona sukcesem
     end
 
-    %% === KROK: Budowa dowodu po stronie klienta ===
-
-    rect rgb(248, 240, 255)
-        Note over User,MerkleTree: Generowanie dowodu zero-knowledge (klient)
-
-        User->>User: Zbudowanie lokalnego drzewa Merkle'a<br/>z otrzymanych kluczy publicznych
-
-        User->>User: Wyszukanie własnego klucza publicznego w drzewie
-        Note over User: Jeśli użytkownika nie ma w drzewie, wyświetlamy błąd.<br/>Sprawdzenie jest lokalne — dowód nie będzie poprawny.
-
-        User->>User: Wygenerowanie ścieżki Merkle'a (od liścia do korzenia)
-
-        User->>User: Wygenerowanie dowodu ZKP
-        Note over User: Parametry do dowodu:<br/>• tożsamość (klucz prywatny)<br/>• dowód Merkle'a (ścieżka)<br/>• wiadomość = głos "za" (wartość stała: 1)<br/>• scope = ID petycji<br/><br/>Wynik:<br/>• nullifier — unikalny identyfikator głosu<br/>• korzeń drzewa Merkle'a<br/>• skompresowany dowód kryptograficzny
+    rect rgb(255, 235, 235)
+        Note over Backend,Database: W przypadku błędu
+        Note over Backend: Automatyczne wycofanie zmian —<br/>usunięcie użytkownika z bazy
+        Note over Backend,Database: Userhash jest wpisany po commitmentcie<br>Jeśli userhash zostanie wpisany, to następna<br>rejestracja będzie niemożliwa.
     end
-
-    %% === KROK: Weryfikacja i zapis głosu ===
-    rect rgb(255, 255, 240)
-        Note over User,Database: Weryfikacja dowodu i zapis głosu
-
-        User->>Backend: Wysłanie dowodu ZKP wraz z ID petycji
-
-        Backend->>Database: Sprawdzenie, czy petycja istnieje
-        Backend->>Database: Sprawdzenie, czy taki głos już istnieje (czy użytkownik już głosował)
-        Database-->>Backend: OK / istnieje lub nie
-
-        Backend->>MerkleTree: Sprawdzenie, czy korzeń i wynik dowodu się zgadzają i są aktualne
-        MerkleTree-->>Backend: OK
-
-        Backend->>Backend: Weryfikacja matematyczna dowodu ZKP
-        Note over Backend: Weryfikacja obliczeń jest kosztowna, więc wykonujemy ją na końcu.<br/>Jeśli cokolwiek nie zwróci prawdy — zwracamy błąd.
-
-        Backend-->>User: Informacja o wyniku (sukces / błąd)
-    end
-
-    Note over User: Wyświetlenie komunikatu sukcesu<br/>Odświeżenie danych petycji
