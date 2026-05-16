@@ -10,6 +10,9 @@ Dzięki zastosowaniu zaawansowanych technologii kryptograficznych i mObywatela, 
 
 ## Struktura Repozytorium (Ważne!)
 
+W tym repozytorium znajduje się sam backend, aby zapoznać się z resztą kodu,
+👉 **[odwiedź repozytorium](https://github.com/Wikmano/PoparcieFE)**
+
 Nasz workflow opiera się na dwóch głównych gałęziach. Zanim zaczniesz działać, upewnij się, że jesteś na odpowiednim branchu:
 
 *  **Branch [`dev`](https://github.com/TWOJ_NICK/TWOJE_REPO/tree/dev) - Środowisko Lokalne**
@@ -35,12 +38,18 @@ Znajdziesz tam **schematy sekwencyjne**, które krok po kroku tłumaczą:
 
 ## Jak uruchomić projekt lokalnie?
 
+WAŻNE!
+W tym repozytorium znajduje się sam backend, aby pobrać resztę kodu,
+👉 **[odwiedź repozytorium](https://github.com/Wikmano/PoparcieFE)**
+
 1. Sklonuj repozytorium na swój dysk:
    ```bash
    git clone [https://github.com/Luk1104/mPoparcie-backend.git](https://github.com/Luk1104/mPoparcie-backend.git)
 
 2. Upewnij się że jesteś na branchu do testowania lokalnie
+```bash
    git checkout dev
 
 3. Uruchom kod w środowisku docker
+```bash
    sudo docker compose up
