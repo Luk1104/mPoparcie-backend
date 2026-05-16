@@ -46,18 +46,13 @@ export const getPetitionsFilteredService = async (
         const query: any = {};
         if (title) query.title = { $regex: title, $options: "i" };
         if (category) query.category = category;
-        
-        if (role === "zkp-user"){
-            if (status !== "archived") query.status = status;
-             else query.status = "active";
-        }
-        else if (role === "petition_user"){ //tego chyba nie musi byc
-            if (status !== "archived") query.status = status;
-             else query.status = "active";
-        }
-        else if (role === "admin") {
+
+        if (role === "admin") {
             console.log("Admin role detected, applying status filter:", status);
             query.status = status;
+        } else {
+            if (status !== "archived") query.status = status;
+            else query.status = "active";
         }
 
         const pageNum = Math.max(1, Math.floor(Number(page) || 1));

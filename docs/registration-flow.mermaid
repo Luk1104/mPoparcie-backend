@@ -1,0 +1,71 @@
+%% Głosowanie
+sequenceDiagram
+    title Rejestracja ZKP Usera
+
+    actor User as User (Frontend)
+    participant Backend
+    participant Database
+    participant MerkleTree as Merkle Tree
+    participant Identt
+
+    Note over User: Użytkownik klika "Zarejestruj z mObywatel"
+
+    %% === KROK 1: Rozpoczęcie sesji rejestracyjnej ===
+    rect rgb(240, 248, 255)
+        Note over User,Backend: Krok 1 — Weryfikacja tożsamości obywatela
+        User->>Backend: Żądanie rozpoczęcia rejestracji
+        Note over Backend: Weryfikacja tożsamości<br/>przez mObywatel
+        alt Mock
+            Backend->>Backend: Generowanie tokenu sesji<br/>z unikalnym userhashem (losowy)
+        else Produkcja
+            Backend->>Identt: Przekierowanie użytkownika do panelu identta. (proxy)
+            Identt->>Identt: Użytkownik loguje się tam przez mObywatel
+            Identt->>Identt: Generowany jest unikalny, deterministyczny userhash z danych osobowych
+            Identt-->>Backend: Zwraca tylko userhash
+        end
+        Backend-->>User: Token sesji rejestracyjnej<br/>(ważny kilka minut, w ciasteczku HTTP)
+        Note over User,Backend: Token zawiera userhasha. <br>To jedyny moment, w którym opuszcza backend.
+    end
+
+    %% === KROK: Tworzenie tożsamości kryptograficznej ===
+    rect rgb(255, 248, 240)
+        Note over User: Użytkownik wybiera metodę zabezpieczenia
+        Note over User: Ważne. Już zawsze musi wybierać tę samą metodę podczas glosowania.
+        alt Passkey (biometria / klucz sprzętowy)
+            User->>User: Tworzenie klucza Passkey<br/>przy użyciu WebAuthn PRF
+            User->>User: Uzyskanie klucza prywatnego<br/>z rozszerzenia PRF
+        else Hasło tradycyjne
+            User->>User: Tworzenie klucza prywatnego<br/>z hasła użytkownika (PBKDF2)
+        end
+        User->>User: Wygenerowanie tożsamości Semaphore<br/>na podstawie sekretu
+        Note over User: Tożsamość zawiera:<br/>• klucz prywatny (secretScalar)<br/>• klucz publiczny (commitment)
+    end
+
+    %% === KROK 2: Rejestracja tożsamości w systemie ===
+    rect rgb(240, 255, 240)
+        Note over User,Database: Krok 2 — Zapis tożsamości
+        User->>Backend: Wysłanie klucza publicznego (commitment)<br/>wraz z tokenem sesji
+        Backend->>Backend: Weryfikacja tokenu sesji
+        Backend->>Database: Sprawdzenie czy userhash<br/>nie jest już zarejestrowany
+        Database-->>Backend: Użytkownik nie istnieje
+        Backend->>Database: Sprawdzenie czy commitment nie jest juz zarejestrowany.
+        Database-->>Backend: Commitment nie istnieje.
+        Backend->>MerkleTree: Dodanie klucza publicznego<br/>do drzewa na kolejnej pozycji
+        MerkleTree->>Database: Zapis commitment z indeksem
+        Database-->>MerkleTree: OK
+        Backend->>Database: Zapisanie identyfikatora użytkownika
+        Database-->>Backend: OK
+        Backend->>MerkleTree: Przebudowa drzewa Merkle'a
+        MerkleTree->>Database: Pobranie wszystkich commitments
+        Database-->>MerkleTree: Lista commitments
+        Note over MerkleTree: Odbudowa drzewa<br/>i obliczenie nowego korzenia
+        MerkleTree->>Database: Aktualizacja korzenia drzewa
+        Database-->>MerkleTree: OK
+        Backend-->>User: Rejestracja zakończona sukcesem
+    end
+
+    rect rgb(255, 235, 235)
+        Note over Backend,Database: W przypadku błędu
+        Note over Backend: Automatyczne wycofanie zmian —<br/>usunięcie użytkownika z bazy
+        Note over Backend,Database: Userhash jest wpisany po commitmentcie<br>Jeśli userhash zostanie wpisany, to następna<br>rejestracja będzie niemożliwa.
+    end
