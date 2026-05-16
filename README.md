@@ -47,9 +47,15 @@ W tym repozytorium znajduje się sam backend, aby pobrać resztę kodu,
    git clone [https://github.com/Luk1104/mPoparcie-backend.git](https://github.com/Luk1104/mPoparcie-backend.git)
 
 2. Upewnij się że jesteś na branchu do testowania lokalnie
-```bash
+    ```bash
    git checkout dev
 
 3. Uruchom kod w środowisku docker
-```bash
+    ```bash
    sudo docker compose up
+
+4. Aplikacja nie umożliwia utworzenia konta admina w tradycyjby sposób, aby go dodać do bazy danych -> odczytaj login i hasło z pliku compose.yaml i wykonaj:
+    ```bash
+   npx tsx src/seed-admin.ts
+
+Aplikację można włączyć lokalnie, standardowo używając poleceń npm i npx, jednak zalecane jest korzystanie ze środowiska wirtualnego, ponieważ tworzony jest też kontener z bazą danych mongodb w kompatybilnej wersji z kodem
