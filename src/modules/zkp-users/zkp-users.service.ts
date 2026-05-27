@@ -1,5 +1,5 @@
+import axios from "axios";
 import { ZkpUserModel } from "./zkp-users.model.js";
-import { mockRegister } from "./mock-register.js";
 import { generateToken } from "../../shared/utils/jwt.util.js";
 
 import { ZkpMetadataModel, ZkpCommitmentModel } from "./merkle-tree.model.js";
@@ -8,18 +8,80 @@ import {
   buildSemaphoreGroup,
 } from "./merkle-tree-functions.js";
 
-export const zkprequestuserHashService = async () => {
-  // zamokowana i niekompletna funkcja - czekamy na identta
-  const userHash = await mockRegister();
-  //prawodopodobnie będzie tu odwołanie do funkcji komunikuajcych sie z identt
-  //
-  const token = generateToken({
-    username: "none",
-    userId: userHash,
-    role: "zkp-user",
-  });
+import {
+  type IdenttTokenResponseDTO,
+  type IdenttLinkResponseDTO,
+} from "./zkp-users.schema.js";
+import EventEmitter from "events";
 
-  return token;
+export const generateLinkService = async () => {
+  const token = await getIdenttToken();
+  const reponse = await axios.post<IdenttLinkResponseDTO>(
+    "https://i2c.ivs-stg02.identt.pl/api/v2/verify/self/init/",
+    {},
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
+  //generate a link https://sv-lite.ivs-stg02.identt.pl/self-verify/?document_id=<document_id>&session_id=<session_id>
+  const { session_id, document_id } = reponse.data;
+  const link = `https://sv-lite.ivs-stg02.identt.pl/self-verify/?document_id=${document_id}&session_id=${session_id}`;
+  return link;
+};
+
+let cachedToken: string | null = null;
+let tokenExpiration: number = 0;
+const getIdenttToken = async () => {
+  if (cachedToken && tokenExpiration && Date.now() < tokenExpiration) {
+    return cachedToken;
+  }
+  const formData = new URLSearchParams();
+  formData.append("client_id", process.env.IDENTT_CLIENT_ID as string);
+  formData.append("client_secret", process.env.IDENTT_CLIENT_SECRET as string);
+  formData.append("username", process.env.IDENTT_USERNAME as string);
+  formData.append("password", process.env.IDENTT_PASSWORD as string);
+  formData.append("grant_type", "password");
+  const response = await axios.post<IdenttTokenResponseDTO>(
+    "https://i2c.ivs-stg02.identt.pl/auth/token/",
+    formData,
+    {
+      headers: {
+        Authorization: `Basic ${process.env.IDENTT_BASIC_AUTH_TOKEN as string}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    },
+  );
+  const access_token = response.data.access_token;
+  const expires_in = response.data.expires_in;
+
+  cachedToken = access_token;
+  tokenExpiration = Date.now() + expires_in * 1000 - 60000; // -1 minute
+  return access_token;
+};
+
+export const webhookEmitter = new EventEmitter();
+
+export const zkprequestuserHashService = async (document_id: string) => {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(
+      () => {
+        reject(new Error("Timeout oczekiwania na webhook z Identt"));
+      },
+      5 * 60 * 1000,
+    ); //5 minutes
+
+    webhookEmitter.once(document_id, (data: { userHash: string }) => {
+      const { userHash } = data;
+
+      const token = generateToken({
+        username: "none",
+        userId: userHash,
+        role: "zkp-user",
+      });
+      clearTimeout(timeout);
+      resolve(token);
+    });
+  });
 };
 
 export const zkpregisterService = async (
@@ -43,7 +105,6 @@ export const zkpregisterService = async (
 
     // jeśli doszliśmy tu bez błędów — zwróć sukces
     return true;
-    
   } catch (error) {
     console.error("Błąd podczas rejestracji ZKP:", error);
     // rollback: usuń utworzonego użytkownika(userhash), jeśli istnieje

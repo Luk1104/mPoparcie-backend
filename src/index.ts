@@ -23,7 +23,7 @@ app.use(express.json());
 
 app.use("/api/petition/user", petitionUsersRoute);
 app.use("/api/petition", petitionCrudRoute);
-app.use("/api/zkp", zkpRoute);
+app.use("/api", zkpRoute); //endpoint was changed!
 app.use("/api/vote", zkpVote);
 
 app.use(errorHandler);

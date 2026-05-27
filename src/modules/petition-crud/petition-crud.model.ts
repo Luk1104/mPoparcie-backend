@@ -34,9 +34,9 @@ export const PetitionModel = mongoose.model("Petition", PetitionSchema);
 console.log("[cron] initializing cron jobs");
 
 // Run every day at midnight (server local time)
-cron.schedule("0 0 * * *", () => {
+cron.schedule("0 0 * * *", async () => {
     console.log("Staring cron job");
-    PetitionModel.updateMany(
+    await PetitionModel.updateMany(
         { deadline: { $lte: new Date() }, status: "active" },
         { $set: { status: "closed" } }
     )
