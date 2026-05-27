@@ -81,14 +81,20 @@ export const webhookReceiver = async (
   next: NextFunction,
 ) => {
   try {
-    const { document_id } = req.body;
+    const { document_id, valid } = req.body;
     const userHash = crypto
       .createHash("sha256")
       .update(document_id)
       .digest("hex");
     console.log(req.body);
-    webhookEmitter.emit(document_id, { userHash }); //should be changed to real userhash later on
-    return res.status(200).send("Webhook received");
+    if (valid === true) {
+      webhookEmitter.emit(document_id, { userHash }); //should be changed to real userhash later on
+      return res.status(200).json({ error: "Otrzymano webhook" });
+    } else {
+      return res
+        .status(400)
+        .json({ error: "Nastąpił błąd podczas weryfikacji tożsamości." });
+    }
   } catch (error) {
     next(error);
   }
