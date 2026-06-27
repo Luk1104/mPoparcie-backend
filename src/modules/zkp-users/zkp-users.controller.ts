@@ -5,15 +5,20 @@ import {
 } from "./zkp-users.service.js";
 import type { RegisterDTO } from "./zkp-users.schema.js";
 import { zkpTreeDumpService } from "./zkp-users.service.js";
+import { webhookEmitter } from "./zkp-users.service.js";
+import crypto from "crypto";
+import { generateLinkService } from "./zkp-users.service.js";
+import { zkpNullifierDumpService } from "./zkp-users.service.js";
 
 export const zkprequestuserHash = async (
-  req: Request,
+  req: Request<{ document_id: string }, any, any>,
   res: Response,
   next: NextFunction,
 ) => {
   try {
     // w tokenie jest userHash
-    const token = await zkprequestuserHashService();
+    const document_id = req.params.document_id;
+    const token = await zkprequestuserHashService(document_id);
     if (token) {
       res.cookie("token", token, {
         httpOnly: true,
@@ -26,7 +31,7 @@ export const zkprequestuserHash = async (
 
     return res
       .status(201)
-      .json({ status: "success", message: "Rejestracja/1 udana" });
+      .json({ status: "success", message: "Rejestracja/2 udana" });
   } catch (error) {
     next(error);
   }
@@ -48,7 +53,49 @@ export const zkpregister = async (
     const state = await zkpregisterService(userHash, commitment);
     return res
       .status(201)
-      .json({ status: "success", message: "Rejestracja/2 udana" });
+      .json({ status: "success", message: "Rejestracja/3 udana" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const generateLink = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const linkData = await generateLinkService();
+    return res.status(200).json({
+      status: "success",
+      message: "Rejestracja/1 udana",
+      data: linkData,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const webhookReceiver = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { document_id, valid } = req.body;
+    const userHash = crypto
+      .createHash("sha256")
+      .update(document_id)
+      .digest("hex");
+    console.log(req.body);
+    if (valid === true) {
+      webhookEmitter.emit(document_id, { userHash }); //should be changed to real userhash later on
+      return res.status(200).json({ error: "Otrzymano webhook" });
+    } else {
+      return res
+        .status(400)
+        .json({ error: "Nastąpił błąd podczas weryfikacji tożsamości." });
+    }
   } catch (error) {
     next(error);
   }
@@ -62,6 +109,20 @@ export const zkpTreeDump = async (
   try {
     const treeData = await zkpTreeDumpService();
     return res.status(200).json({ status: "success", data: treeData });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+export const zkpNullifierDump = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const nullifiers = await zkpNullifierDumpService();
+    return res.status(200).json({ status: "success", data: nullifiers });
   } catch (error) {
     next(error);
   }

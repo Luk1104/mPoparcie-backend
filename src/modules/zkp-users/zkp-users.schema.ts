@@ -2,16 +2,39 @@ import { z } from "zod";
 
 export const zkpregisterSchema = z
   .object({
-    commitment: z.string()
+    commitment: z
+      .string()
       .min(1, "Commitment jest wymagany")
       .max(300, "Commitment nie może być dłuższy niż 300 znaków")
       .regex(/^\d+$/, "Commitment musi być ciągiem cyfr"),
   })
   .strict();
 
-export type RegisterDTO = z.infer<typeof zkpregisterSchema>;
+export const getIdenttTokenResponseSchema = z
+  .object({
+    access_token: z.string(),
+    expires_in: z.number(),
+    token_type: z.string(),
+    scope: z.string(),
+    refresh_token: z.string(),
+  })
+  .strict();
 
-// username: z
-//       .string()
-//       .min(2, "Nazwa użytkownika musi mieć minimum 2 znaki")
-//       .max(16, "Nazwa użytkownika może mieć maksymalnie 16 znaków"),
+export const getIdenttLinkResponseSchema = z
+  .object({
+    session_id: z.string(),
+    document_id: z.string(),
+    client_tid: z.string().nullable().optional(),
+    lang: z.string(),
+    bc_name: z.string(),
+    state: z.string(),
+  })
+  .strict();
+
+export type IdenttLinkResponseDTO = z.infer<typeof getIdenttLinkResponseSchema>;
+
+export type IdenttTokenResponseDTO = z.infer<
+  typeof getIdenttTokenResponseSchema
+>;
+
+export type RegisterDTO = z.infer<typeof zkpregisterSchema>;
