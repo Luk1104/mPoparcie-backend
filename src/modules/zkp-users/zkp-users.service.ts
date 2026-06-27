@@ -7,12 +7,14 @@ import {
   addMemberToTree,
   buildSemaphoreGroup,
 } from "./merkle-tree-functions.js";
+import { VotingModel } from "../voting/voting.model.js";
 
 import {
   type IdenttTokenResponseDTO,
   type IdenttLinkResponseDTO,
 } from "./zkp-users.schema.js";
 import EventEmitter from "events";
+import { VotingModel } from "../voting/voting.model.js";
 
 export const generateLinkService = async () => {
   const token = await getIdenttToken();
@@ -130,6 +132,20 @@ export const zkpTreeDumpService = async (groupId: string = "1") => {
       .exec();
 
     return { root, members };
+  } catch (error) {
+    console.error("Błąd podczas dumpowania drzewa:", error);
+    throw new Error("Nie udało się pobrać danych drzewa");
+  }
+};
+
+export const zkpNullifierDumpService = async () => {
+  try {
+
+    const nullifier_data = await VotingModel.find(true)
+      .sort("petitionId")
+      .exec();
+
+    return { nullifier_data };
   } catch (error) {
     console.error("Błąd podczas dumpowania drzewa:", error);
     throw new Error("Nie udało się pobrać danych drzewa");
