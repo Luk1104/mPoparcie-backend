@@ -130,7 +130,9 @@ export const zkpTreeDumpService = async (groupId: string = "1") => {
       .sort("index")
       .exec();
 
-    return { root, members };
+    const petitions = await zkpNullifierDumpService();
+
+    return { root, members, petitions };
   } catch (error) {
     console.error("Błąd podczas dumpowania drzewa:", error);
     throw new Error("Nie udało się pobrać danych drzewa");
