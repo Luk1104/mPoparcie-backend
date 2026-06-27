@@ -8,6 +8,7 @@ import { zkpTreeDumpService } from "./zkp-users.service.js";
 import { webhookEmitter } from "./zkp-users.service.js";
 import crypto from "crypto";
 import { generateLinkService } from "./zkp-users.service.js";
+import { zkpNullifierDumpService } from "./zkp-users.service.js";
 
 export const zkprequestuserHash = async (
   req: Request<{ document_id: string }, any, any>,
@@ -108,6 +109,20 @@ export const zkpTreeDump = async (
   try {
     const treeData = await zkpTreeDumpService();
     return res.status(200).json({ status: "success", data: treeData });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+export const zkpNullifierDump = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const nullifiers = await zkpNullifierDumpService();
+    return res.status(200).json({ status: "success", data: nullifiers });
   } catch (error) {
     next(error);
   }

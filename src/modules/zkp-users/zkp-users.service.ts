@@ -7,6 +7,7 @@ import {
   addMemberToTree,
   buildSemaphoreGroup,
 } from "./merkle-tree-functions.js";
+import { VotingModel } from "../voting/voting.model.js";
 
 import {
   type IdenttTokenResponseDTO,
@@ -133,5 +134,36 @@ export const zkpTreeDumpService = async (groupId: string = "1") => {
   } catch (error) {
     console.error("Błąd podczas dumpowania drzewa:", error);
     throw new Error("Nie udało się pobrać danych drzewa");
+  }
+};
+
+export const zkpNullifierDumpService = async () => {
+  try {
+    const votes = await VotingModel.find({}).sort("petitionId").exec();
+
+    // Group nullifiers by petitionId
+    const grouped: Record<string, string[]> = {};
+    for (const vote of votes) {
+      const petitionId = vote.petitionId.toString();
+      if (!grouped[petitionId]) {
+        grouped[petitionId] = [];
+      }
+      grouped[petitionId].push(vote.nullifier);
+    }
+
+    const petitions = Object.entries(grouped).map(
+      ([petitionId, nullifiers]) => ({
+        petitionId,
+        nullifiers,
+      }),
+    );
+
+    return {
+      totalPetitions: petitions.length,
+      petitions,
+    };
+  } catch (error) {
+    console.error("Błąd podczas dumpowania nullifierów:", error);
+    throw new Error("Nie udało się pobrać danych nullifierów");
   }
 };
